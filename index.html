@@ -1,0 +1,425 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رحلة في عالم الخلايا - لمار الرشيدي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .slide-container {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            height: 100vh;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .slide-container::-webkit-scrollbar { display: none; }
+
+        .slide {
+            scroll-snap-align: start;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* 3D Flip Card Styles */
+        .flip-container {
+            perspective: 1000px;
+            height: 350px;
+        }
+        .flip-card {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            position: relative;
+            cursor: pointer;
+        }
+        .flip-container:hover .flip-card, .flip-container.active .flip-card {
+            transform: rotateY(180deg);
+        }
+        .flip-front, .flip-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        .flip-front { background: white; border: 2px solid #e2e8f0; }
+        .flip-back { transform: rotateY(180deg); }
+        .back-animal { background: linear-gradient(135deg, #ffe4e6, #fecdd3); border: 2px solid #fda4af; }
+        .back-plant { background: linear-gradient(135deg, #dcfce7, #bbf7d0); border: 2px solid #86efac; }
+
+        /* Animations */
+        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
+        @keyframes bounce-sm { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        
+        .floating { animation: float 6s ease-in-out infinite; }
+        .floating-delay-1 { animation: float 7s ease-in-out infinite; animation-delay: 2s; }
+        .floating-delay-2 { animation: float 5s ease-in-out infinite; animation-delay: 4s; }
+        .shake-anim { animation: shake 0.4s ease-in-out; }
+        .click-bounce:active { animation: bounce-sm 0.2s; }
+
+        .shape { position: absolute; z-index: 0; border-radius: 50%; filter: blur(40px); opacity: 0.8; }
+        .shape-1 { top: -10%; right: -10%; width: 400px; height: 400px; background: #e0e7ff; } 
+        .shape-2 { bottom: -10%; left: -10%; width: 500px; height: 500px; background: #fce7f3; } 
+        .shape-3 { top: 40%; left: 20%; width: 300px; height: 300px; background: #dcfce7; }
+
+        .content-z { z-index: 10; position: relative; width: 100%; max-width: 64rem; margin: 0 auto; padding: 2rem; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="fixed inset-0 pointer-events-none z-0">
+        <div class="shape shape-1 floating"></div>
+        <div class="shape shape-2 floating-delay-1"></div>
+        <div class="shape shape-3 floating-delay-2"></div>
+    </div>
+
+    <!-- أزرار التنقل -->
+    <div class="controls fixed right-4 bottom-4 md:right-6 md:bottom-6 z-50 flex flex-col gap-3">
+        <button onclick="scrollSlide(-1)" class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-indigo-500 hover:bg-indigo-50 click-bounce">
+            <svg class="w-6 h-6 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+        </button>
+        <button onclick="scrollSlide(1)" class="w-10 h-10 md:w-12 md:h-12 bg-indigo-500 rounded-full shadow-lg flex items-center justify-center text-white hover:bg-indigo-600 click-bounce">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+        </button>
+    </div>
+
+    <!-- نقاط التنقل الجانبية -->
+    <div class="nav-dots fixed left-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-3"></div>
+
+    <div id="presentation" class="slide-container">
+
+        <!-- الشريحة 1: البداية -->
+        <section class="slide" id="slide-0">
+            <div class="content-z flex flex-col items-center justify-center text-center">
+                <div class="glass-card rounded-3xl p-8 md:p-12 w-full max-w-3xl transform transition-transform hover:scale-105 duration-500 cursor-default">
+                    <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner floating">
+                        <span class="text-5xl">🔬</span>
+                    </div>
+                    <h1 class="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-6 leading-tight">
+                        رحلة ممتعة في<br>عالم الخلايا
+                    </h1>
+                    <p class="text-lg md:text-xl text-slate-600 mb-10 font-medium">اكتشف وحدة البناء الأساسية للحياة!</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-right bg-white/60 p-4 md:p-6 rounded-2xl">
+                        <div>
+                            <p class="text-xs md:text-sm text-slate-500">إعداد الطالبة:</p>
+                            <p class="text-lg md:text-xl font-bold text-indigo-900">لمار نادر الرشيدي</p>
+                        </div>
+                        <div>
+                            <p class="text-xs md:text-sm text-slate-500">الفصل:</p>
+                            <p class="text-lg md:text-xl font-bold text-indigo-900">أولى متوسط ٣</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="scrollSlide(1)" class="mt-8 px-8 py-3 bg-indigo-600 text-white rounded-full text-lg font-bold shadow-lg hover:bg-indigo-700 click-bounce animate-pulse">
+                        ابدأ الرحلة 🚀
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- الشريحة 2: ماهي الخلية -->
+        <section class="slide" id="slide-1">
+            <div class="content-z flex flex-col md:flex-row items-center gap-8">
+                <div class="w-full md:w-1/2 glass-card p-8 md:p-10 rounded-3xl">
+                    <h2 class="text-3xl md:text-4xl font-bold text-indigo-700 mb-6">ماهي الخلية؟ 🤔</h2>
+                    <p class="text-xl md:text-2xl text-slate-700 leading-relaxed font-medium mb-6">
+                        تخيلي أن جسمك مثل <strong>المدينة الكبيرة</strong>، الخلايا هي <strong>الطوب</strong> الصغير اللي يبني هذي المدينة كلها!
+                    </p>
+                    <ul class="space-y-4 text-lg md:text-xl text-slate-600">
+                        <li class="flex items-center gap-3">
+                            <span class="min-w-[32px] h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">✓</span>
+                            هي أصغر وحدة بناء في الكائن الحي.
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="min-w-[32px] h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">✓</span>
+                            لا يمكن رؤيتها غالباً إلا بالمجهر.
+                        </li>
+                    </ul>
+                </div>
+                <div class="w-full md:w-1/2 flex justify-center">
+                    <div class="w-64 h-64 md:w-80 md:h-80 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center shadow-2xl floating">
+                        <span class="text-8xl md:text-9xl">🦠</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- الشريحة 3: أنواع الخلايا (بطاقات تفاعلية) -->
+        <section class="slide" id="slide-2">
+            <div class="content-z flex flex-col text-center w-full">
+                <h2 class="text-3xl md:text-4xl font-bold text-purple-700 mb-4">أنواع الخلايا الأساسية 🌿🐾</h2>
+                <p class="text-slate-500 mb-8">(المس البطاقة لقلبها)</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto">
+                    
+                    <!-- بطاقة الخلية الحيوانية -->
+                    <div class="flip-container" onclick="this.classList.toggle('active')">
+                        <div class="flip-card shadow-lg rounded-3xl">
+                            <!-- الوجه الأمامي -->
+                            <div class="flip-front">
+                                <div class="text-7xl mb-4">🦁</div>
+                                <h3 class="text-3xl font-bold text-rose-600">الخلية الحيوانية</h3>
+                            </div>
+                            <!-- الوجه الخلفي -->
+                            <div class="flip-back back-animal">
+                                <h3 class="text-2xl font-bold text-rose-700 mb-4">خصائصها</h3>
+                                <p class="text-rose-900 text-lg leading-relaxed px-4">موجودة في أجسامنا والحيوانات. شكلها غير منتظم وتقدر تتغير.</p>
+                                <div class="mt-4 flex flex-wrap gap-2 justify-center">
+                                    <span class="px-3 py-1 bg-white text-rose-600 rounded-full text-sm font-bold shadow-sm">بدون جدار خلوي</span>
+                                    <span class="px-3 py-1 bg-white text-rose-600 rounded-full text-sm font-bold shadow-sm">فجوات صغيرة</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- بطاقة الخلية النباتية -->
+                    <div class="flip-container" onclick="this.classList.toggle('active')">
+                        <div class="flip-card shadow-lg rounded-3xl">
+                            <!-- الوجه الأمامي -->
+                            <div class="flip-front">
+                                <div class="text-7xl mb-4">🌻</div>
+                                <h3 class="text-3xl font-bold text-green-600">الخلية النباتية</h3>
+                            </div>
+                            <!-- الوجه الخلفي -->
+                            <div class="flip-back back-plant">
+                                <h3 class="text-2xl font-bold text-green-800 mb-4">خصائصها</h3>
+                                <p class="text-green-900 text-lg leading-relaxed px-4">في الأشجار والنباتات. شكلها يشبه الصندوق وثابتة.</p>
+                                <div class="mt-4 flex flex-wrap gap-2 justify-center">
+                                    <span class="px-3 py-1 bg-white text-green-700 rounded-full text-sm font-bold shadow-sm">جدار خلوي قوي</span>
+                                    <span class="px-3 py-1 bg-white text-green-700 rounded-full text-sm font-bold shadow-sm">بلاستيدات خضراء</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- الشريحة 4: جولة داخل الخلية -->
+        <section class="slide" id="slide-3">
+            <div class="content-z">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-teal-700 mb-12">أجزاء الخلية من الداخل 🔍</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card p-6 md:p-8 rounded-3xl text-center hover:bg-teal-50 transition-colors duration-300">
+                        <div class="w-16 h-16 md:w-20 md:h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4 floating">
+                            <span class="text-3xl md:text-4xl">🧠</span>
+                        </div>
+                        <h3 class="text-xl md:text-2xl font-bold text-teal-800 mb-3">النواة (المدير)</h3>
+                        <p class="text-slate-600">تحتوي على المعلومات الوراثية (DNA) وتتحكم في كل شيء.</p>
+                    </div>
+                    <div class="glass-card p-6 md:p-8 rounded-3xl text-center hover:bg-orange-50 transition-colors duration-300 md:mt-8">
+                        <div class="w-16 h-16 md:w-20 md:h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 floating" style="animation-delay: 1s;">
+                            <span class="text-3xl md:text-4xl">⚡</span>
+                        </div>
+                        <h3 class="text-xl md:text-2xl font-bold text-orange-800 mb-3">الميتوكندريا</h3>
+                        <p class="text-slate-600">مصنع الطاقة، تحرق الغذاء لتعطي الخلية طاقة ونشاط.</p>
+                    </div>
+                    <div class="glass-card p-6 md:p-8 rounded-3xl text-center hover:bg-blue-50 transition-colors duration-300">
+                        <div class="w-16 h-16 md:w-20 md:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 floating" style="animation-delay: 2s;">
+                            <span class="text-3xl md:text-4xl">🛡️</span>
+                        </div>
+                        <h3 class="text-xl md:text-2xl font-bold text-blue-800 mb-3">الغشاء البلازمي</h3>
+                        <p class="text-slate-600">الحارس اللي يحيط بالخلية ويقرر إيش يدخل وإيش يطلع.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- الشريحة 5: اللعبة التفاعلية -->
+        <section class="slide" id="slide-4">
+            <div class="content-z flex flex-col items-center w-full">
+                <div class="glass-card p-6 md:p-10 rounded-3xl w-full max-w-2xl text-center">
+                    <h2 class="text-3xl font-bold text-indigo-600 mb-2">لعبة: اختبر معلوماتك 🎮</h2>
+                    <p class="text-slate-500 mb-8">نشوف مين المركز معنا؟</p>
+                    
+                    <div id="quiz-container" class="min-h-[200px]">
+                        <h3 id="question-text" class="text-xl md:text-2xl font-bold text-slate-700 mb-6 leading-relaxed">جزء الخلية اللي يعتبر "المدير" ومسؤول عن التحكم هو:</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="answers-container">
+                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 click-bounce">الميتوكندريا</button>
+                            <button onclick="checkAnswer(this, true)" class="p-4 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 click-bounce">النواة</button>
+                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 click-bounce">الغشاء البلازمي</button>
+                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 click-bounce">الجدار الخلوي</button>
+                        </div>
+                    </div>
+
+                    <!-- رسالة النجاح المخفية -->
+                    <div id="success-message" class="hidden flex-col items-center justify-center py-10">
+                        <div class="text-7xl mb-4">🏆</div>
+                        <h3 class="text-3xl font-bold text-green-600 mb-2">ممتاز! إجابة صحيحة</h3>
+                        <p class="text-slate-600 text-lg">بطلة ومركزة معنا بالرحلة!</p>
+                        <button onclick="scrollSlide(1)" class="mt-6 px-6 py-2 bg-green-500 text-white rounded-full font-bold hover:bg-green-600 click-bounce">الذهاب للنهاية</button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- الشريحة 6: النهاية -->
+        <section class="slide" id="slide-5">
+            <div class="content-z flex flex-col items-center justify-center text-center h-full">
+                <div class="text-8xl mb-6 pulse-anim">✨</div>
+                <h2 class="text-4xl md:text-5xl font-black text-indigo-700 mb-6">شكراً لاستماعكم وتفاعلكم</h2>
+                <p class="text-xl md:text-2xl text-slate-600 mb-10">أتمنى تكون رحلتنا في عالم الخلايا أعجبتكم!</p>
+                <div class="glass-card px-10 py-5 rounded-full inline-block text-xl font-bold text-indigo-900 shadow-sm border-2 border-indigo-100">
+                    إعداد: لمار الرشيدي
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // إعداد التنقل
+        const container = document.getElementById('presentation');
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+
+        const dotsContainer = document.querySelector('.nav-dots');
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('button');
+            dot.className = `w-3 h-3 rounded-full transition-all duration-300 ${i === 0 ? 'bg-indigo-600 scale-125' : 'bg-slate-300 shadow-md'}`;
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+        const dots = document.querySelectorAll('.nav-dots button');
+
+        function updateDots(index) {
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.remove('bg-slate-300');
+                    dot.classList.add('bg-indigo-600', 'scale-125');
+                } else {
+                    dot.classList.remove('bg-indigo-600', 'scale-125');
+                    dot.classList.add('bg-slate-300');
+                }
+            });
+            // إذا وصلنا الشريحة الأخيرة، نشغل احتفال خفيف
+            if(index === totalSlides - 1) {
+                setTimeout(fireConfetti, 500);
+            }
+        }
+
+        function scrollSlide(direction) {
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= totalSlides) currentSlide = totalSlides - 1;
+            goToSlide(currentSlide);
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            slides[index].scrollIntoView({ behavior: 'smooth' });
+            updateDots(index);
+        }
+
+        container.addEventListener('scroll', () => {
+            const scrollPosition = container.scrollTop;
+            const windowHeight = window.innerHeight;
+            const newIndex = Math.round(scrollPosition / windowHeight);
+            
+            if (newIndex !== currentSlide && newIndex >= 0 && newIndex < totalSlides) {
+                currentSlide = newIndex;
+                updateDots(currentSlide);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') scrollSlide(1);
+            else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') scrollSlide(-1);
+        });
+
+        // منطق اللعبة
+        function checkAnswer(button, isCorrect) {
+            if(isCorrect) {
+                button.classList.remove('border-slate-200', 'text-slate-600');
+                button.classList.add('bg-green-500', 'text-white', 'border-green-600');
+                fireConfetti();
+                
+                setTimeout(() => {
+                    document.getElementById('quiz-container').classList.add('hidden');
+                    document.getElementById('success-message').classList.remove('hidden');
+                    document.getElementById('success-message').classList.add('flex');
+                }, 800);
+            } else {
+                button.classList.remove('border-slate-200');
+                button.classList.add('bg-red-100', 'border-red-400', 'text-red-600', 'shake-anim');
+                setTimeout(() => {
+                    button.classList.remove('shake-anim');
+                    // Reset styling after a bit
+                    setTimeout(() => {
+                        button.classList.remove('bg-red-100', 'border-red-400', 'text-red-600');
+                        button.classList.add('bg-white', 'border-slate-200', 'text-slate-600');
+                    }, 1000);
+                }, 400);
+            }
+        }
+
+        // إطلاق الاحتفالات
+        function fireConfetti() {
+            var duration = 3000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#4f46e5', '#db2777', '#0d9488']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#4f46e5', '#db2777', '#0d9488']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+    </script>
+</body>
+</html>
+
+```
