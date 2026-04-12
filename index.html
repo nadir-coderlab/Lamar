@@ -14,6 +14,7 @@
             margin: 0;
             overflow: hidden;
             background-color: #f8fafc;
+            color: #1e293b;
             -webkit-tap-highlight-color: transparent;
         }
         
@@ -29,91 +30,139 @@
 
         .slide {
             scroll-snap-align: start;
-            height: 100vh;
+            min-height: 100vh;
             width: 100vw;
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 2rem 0;
         }
 
+        /* Glassmorphism Light Theme */
         .glass-card {
             background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 40px -10px rgba(79, 70, 229, 0.15);
         }
 
-        /* 3D Flip Card Styles */
-        .flip-container {
-            perspective: 1000px;
-            height: 350px;
-        }
-        .flip-card {
-            width: 100%;
-            height: 100%;
-            transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
-            transform-style: preserve-3d;
-            position: relative;
-            cursor: pointer;
-        }
-        .flip-container:hover .flip-card, .flip-container.active .flip-card {
-            transform: rotateY(180deg);
-        }
-        .flip-front, .flip-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            border-radius: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            text-align: center;
-        }
-        .flip-front { background: white; border: 2px solid #e2e8f0; }
-        .flip-back { transform: rotateY(180deg); }
-        .back-animal { background: linear-gradient(135deg, #ffe4e6, #fecdd3); border: 2px solid #fda4af; }
-        .back-plant { background: linear-gradient(135deg, #dcfce7, #bbf7d0); border: 2px solid #86efac; }
+        /* Abstract Shapes Background */
+        .shape { position: absolute; z-index: 0; filter: blur(50px); opacity: 0.6; border-radius: 50%; }
+        .shape-1 { top: -10%; right: -10%; width: 500px; height: 500px; background: #e0e7ff; animation: float 8s infinite; }
+        .shape-2 { bottom: -10%; left: -10%; width: 600px; height: 600px; background: #fce7f3; animation: float 10s infinite reverse; }
+        .shape-3 { top: 30%; left: 20%; width: 400px; height: 400px; background: #ccfbf1; animation: float 12s infinite; }
 
         /* Animations */
-        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
-        @keyframes bounce-sm { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-20px, 20px); } }
+        @keyframes pulse-ring { 
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); } 
+            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); } 
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } 
+        }
+        @keyframes morph {
+            0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+            34% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; }
+            67% { border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%; }
+            100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+        }
+        @keyframes bounce-x { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-10px); } }
         
-        .floating { animation: float 6s ease-in-out infinite; }
-        .floating-delay-1 { animation: float 7s ease-in-out infinite; animation-delay: 2s; }
-        .floating-delay-2 { animation: float 5s ease-in-out infinite; animation-delay: 4s; }
-        .shake-anim { animation: shake 0.4s ease-in-out; }
-        .click-bounce:active { animation: bounce-sm 0.2s; }
+        .pulse-btn { animation: pulse-ring 2s infinite; }
+        .morph-cell { animation: morph 8s ease-in-out infinite; }
+        .bounce-arrow { animation: bounce-x 2s infinite; }
 
-        .shape { position: absolute; z-index: 0; border-radius: 50%; filter: blur(40px); opacity: 0.8; }
-        .shape-1 { top: -10%; right: -10%; width: 400px; height: 400px; background: #e0e7ff; } 
-        .shape-2 { bottom: -10%; left: -10%; width: 500px; height: 500px; background: #fce7f3; } 
-        .shape-3 { top: 40%; left: 20%; width: 300px; height: 300px; background: #dcfce7; }
+        .content-z { z-index: 10; position: relative; width: 100%; max-width: 68rem; margin: 0 auto; padding: 1.5rem; }
 
-        .content-z { z-index: 10; position: relative; width: 100%; max-width: 64rem; margin: 0 auto; padding: 2rem; }
+        /* --- THE CELL EXPLORER (Interactive) --- */
+        #cell-simulation-container {
+            transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+        .zoomed-in {
+            transform: scale(1.6);
+        }
+        .main-cell {
+            position: relative;
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, #e0f2fe 0%, #bae6fd 100%);
+            border: 8px solid #7dd3fc;
+            margin: 0 auto;
+            box-shadow: inset 0 0 40px rgba(56, 189, 248, 0.5), 0 20px 40px rgba(0,0,0,0.1);
+            transition: all 0.5s;
+        }
+        @media (min-width: 768px) { .main-cell { width: 400px; height: 400px; } }
+        
+        .organelle {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex; flex-direction: column; items-center; justify-center; text-align: center;
+        }
+        .organelle::after {
+            content: '';
+            position: absolute; inset: -5px; border-radius: 50%;
+            border: 2px dashed rgba(99, 102, 241, 0.5);
+            animation: spin 4s linear infinite;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .organelle:hover { transform: scale(1.2); z-index: 20; }
+        .organelle:hover::after { opacity: 1; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .org-nucleus { top: 30%; left: 30%; font-size: 3.5rem; animation: float 4s ease-in-out infinite; }
+        .org-mito { top: 20%; right: 20%; font-size: 2.5rem; animation: float 3s ease-in-out infinite 1s; }
+        .org-vacuole { bottom: 25%; left: 25%; font-size: 2.5rem; animation: float 5s ease-in-out infinite 2s; }
+        .org-golgi { bottom: 30%; right: 25%; font-size: 2.5rem; animation: float 4.5s ease-in-out infinite 0.5s; }
+
+        .interactive-badge {
+            background: linear-gradient(135deg, #f43f5e, #ec4899);
+            color: white; padding: 0.5rem 1.5rem; border-radius: 9999px; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            animation: pulse-ring 2s infinite;
+        }
+
+        /* Flip Cards */
+        .flip-container { perspective: 1000px; height: 320px; }
+        .flip-card {
+            width: 100%; height: 100%; transition: transform 0.8s;
+            transform-style: preserve-3d; cursor: pointer;
+        }
+        .flip-container:hover .flip-card, .flip-container.active .flip-card { transform: rotateY(180deg); }
+        .flip-front, .flip-back {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; border-radius: 1.5rem;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;
+        }
+        .flip-front { background: white; border: 2px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+        .flip-back { transform: rotateY(180deg); color: white; }
+        .bg-rose-grad { background: linear-gradient(135deg, #fb7185, #e11d48); }
+        .bg-teal-grad { background: linear-gradient(135deg, #34d399, #059669); }
+
+        /* Tabs */
+        .tab-content { display: none; animation: fadeIn 0.5s ease-in; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="text-slate-800">
+<body>
 
-    <div class="fixed inset-0 pointer-events-none z-0">
-        <div class="shape shape-1 floating"></div>
-        <div class="shape shape-2 floating-delay-1"></div>
-        <div class="shape shape-3 floating-delay-2"></div>
+    <!-- Background -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
     </div>
 
     <!-- أزرار التنقل -->
-    <div class="controls fixed right-4 bottom-4 md:right-6 md:bottom-6 z-50 flex flex-col gap-3">
-        <button onclick="scrollSlide(-1)" class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-indigo-500 hover:bg-indigo-50 click-bounce">
+    <div class="controls fixed right-4 bottom-4 md:right-8 md:bottom-8 z-50 flex flex-col gap-3">
+        <button onclick="scrollSlide(-1)" class="w-12 h-12 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-indigo-500 hover:bg-white shadow-lg transition transform hover:-translate-y-1">
             <svg class="w-6 h-6 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
         </button>
-        <button onclick="scrollSlide(1)" class="w-10 h-10 md:w-12 md:h-12 bg-indigo-500 rounded-full shadow-lg flex items-center justify-center text-white hover:bg-indigo-600 click-bounce">
+        <button onclick="scrollSlide(1)" class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white hover:bg-indigo-700 shadow-lg pulse-btn transition transform hover:-translate-y-1">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
         </button>
     </div>
@@ -126,28 +175,32 @@
         <!-- الشريحة 1: البداية -->
         <section class="slide" id="slide-0">
             <div class="content-z flex flex-col items-center justify-center text-center">
-                <div class="glass-card rounded-3xl p-8 md:p-12 w-full max-w-3xl transform transition-transform hover:scale-105 duration-500 cursor-default">
-                    <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner floating">
-                        <span class="text-5xl">🔬</span>
+                <div class="glass-card rounded-[2.5rem] p-10 md:p-14 w-full max-w-4xl transform transition hover:scale-105 duration-700">
+                    <div class="w-28 h-28 bg-gradient-to-tr from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner relative">
+                        <span class="text-6xl absolute" style="animation: float 3s infinite">🔬</span>
+                        <div class="absolute -right-2 -top-2 w-8 h-8 bg-yellow-300 rounded-full flex items-center justify-center text-xs shadow-lg bounce-arrow">✨</div>
                     </div>
-                    <h1 class="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-6 leading-tight">
-                        رحلة ممتعة في<br>عالم الخلايا
+                    <h1 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 mb-6 leading-tight">
+                        أسرار عالم الخلايا
                     </h1>
-                    <p class="text-lg md:text-xl text-slate-600 mb-10 font-medium">اكتشف وحدة البناء الأساسية للحياة!</p>
+                    <p class="text-xl md:text-2xl text-slate-600 mb-10 font-medium">رحلة تفاعلية ممتعة لاكتشاف وحدة البناء الأساسية للحياة!</p>
                     
-                    <div class="grid grid-cols-2 gap-4 text-right bg-white/60 p-4 md:p-6 rounded-2xl">
-                        <div>
-                            <p class="text-xs md:text-sm text-slate-500">إعداد الطالبة:</p>
-                            <p class="text-lg md:text-xl font-bold text-indigo-900">لمار نادر الرشيدي</p>
+                    <div class="flex flex-col md:flex-row gap-6 justify-center items-center bg-white/60 p-6 rounded-3xl border border-white/50 max-w-2xl mx-auto mb-8">
+                        <div class="text-center px-6 md:border-l-2 border-slate-200">
+                            <p class="text-sm text-slate-500 mb-1">إعداد الطالبة المبدعة</p>
+                            <p class="text-2xl font-bold text-indigo-900">لمار نادر الرشيدي</p>
                         </div>
-                        <div>
-                            <p class="text-xs md:text-sm text-slate-500">الفصل:</p>
-                            <p class="text-lg md:text-xl font-bold text-indigo-900">أولى متوسط ٣</p>
+                        <div class="text-center px-6">
+                            <p class="text-sm text-slate-500 mb-1">الصف والفصل</p>
+                            <p class="text-2xl font-bold text-pink-600">أولى متوسط ٣</p>
                         </div>
                     </div>
+
+                    <p class="text-sm text-slate-400 mb-6">تم التصميم بواسطة Gemini Pro</p>
                     
-                    <button onclick="scrollSlide(1)" class="mt-8 px-8 py-3 bg-indigo-600 text-white rounded-full text-lg font-bold shadow-lg hover:bg-indigo-700 click-bounce animate-pulse">
-                        ابدأ الرحلة 🚀
+                    <button onclick="scrollSlide(1)" class="group px-10 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full text-xl font-bold shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center gap-3 mx-auto">
+                        <span>ابدأ الرحلة التفاعلية</span>
+                        <span class="group-hover:translate-x-[-5px] transition-transform">👈</span>
                     </button>
                 </div>
             </div>
@@ -155,76 +208,99 @@
 
         <!-- الشريحة 2: ماهي الخلية -->
         <section class="slide" id="slide-1">
-            <div class="content-z flex flex-col md:flex-row items-center gap-8">
-                <div class="w-full md:w-1/2 glass-card p-8 md:p-10 rounded-3xl">
-                    <h2 class="text-3xl md:text-4xl font-bold text-indigo-700 mb-6">ماهي الخلية؟ 🤔</h2>
-                    <p class="text-xl md:text-2xl text-slate-700 leading-relaxed font-medium mb-6">
-                        تخيلي أن جسمك مثل <strong>المدينة الكبيرة</strong>، الخلايا هي <strong>الطوب</strong> الصغير اللي يبني هذي المدينة كلها!
+            <div class="content-z flex flex-col md:flex-row items-center gap-12">
+                <div class="w-full md:w-1/2 glass-card p-10 md:p-12 rounded-[2.5rem]">
+                    <div class="interactive-badge mb-6 text-sm">💡 شريحة تفاعلية: جربي تضغطي على الزر تحت</div>
+                    <h2 class="text-4xl font-bold text-indigo-800 mb-6">ماهي الخلية؟ 🤔</h2>
+                    <p class="text-2xl text-slate-700 leading-relaxed font-medium mb-8">
+                        تخيلي أن جسمك مثل <strong>المدينة الكبيرة الذكية</strong>، الخلايا هي <strong>الطوب</strong> الصغير المليء بالحياة اللي يبني هذي المدينة كلها!
                     </p>
-                    <ul class="space-y-4 text-lg md:text-xl text-slate-600">
-                        <li class="flex items-center gap-3">
-                            <span class="min-w-[32px] h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">✓</span>
+                    <ul class="space-y-4 text-xl text-slate-600 mb-8">
+                        <li class="flex items-center gap-4 bg-white/50 p-4 rounded-2xl">
+                            <span class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xl shadow-sm">✓</span>
                             هي أصغر وحدة بناء في الكائن الحي.
                         </li>
-                        <li class="flex items-center gap-3">
-                            <span class="min-w-[32px] h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">✓</span>
-                            لا يمكن رؤيتها غالباً إلا بالمجهر.
+                        <li class="flex items-center gap-4 bg-white/50 p-4 rounded-2xl">
+                            <span class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xl shadow-sm">✓</span>
+                            تتنفس، تتغذى، وتنقسم لننمو.
                         </li>
                     </ul>
+                    <button onclick="document.getElementById('fun-fact-modal').classList.remove('hidden')" class="w-full py-4 bg-pink-100 text-pink-700 rounded-2xl font-bold text-xl hover:bg-pink-200 transition-colors flex items-center justify-center gap-2 border-2 border-pink-200">
+                        <span>🌟 اضغطي هنا لمعلومة صادمة!</span>
+                    </button>
                 </div>
-                <div class="w-full md:w-1/2 flex justify-center">
-                    <div class="w-64 h-64 md:w-80 md:h-80 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center shadow-2xl floating">
-                        <span class="text-8xl md:text-9xl">🦠</span>
+                <div class="w-full md:w-1/2 flex justify-center relative">
+                    <div class="w-72 h-72 md:w-96 md:h-96 bg-white rounded-full flex items-center justify-center shadow-2xl border-8 border-indigo-100 relative" style="animation: float 6s infinite ease-in-out">
+                        <span class="text-9xl">🦠</span>
+                        <div class="absolute -right-4 top-10 w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center text-3xl shadow-lg" style="animation: float 4s infinite reverse">✨</div>
+                        <div class="absolute -left-4 bottom-10 w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-2xl shadow-lg" style="animation: float 5s infinite">🔬</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Modal for Fun Fact -->
+            <div id="fun-fact-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+                <div class="bg-white p-10 rounded-[2.5rem] max-w-lg w-full text-center shadow-2xl transform scale-100 transition-transform">
+                    <div class="text-7xl mb-4">🤯</div>
+                    <h3 class="text-3xl font-bold text-indigo-800 mb-4">هل تعلمين؟</h3>
+                    <p class="text-2xl text-slate-600 leading-relaxed mb-8">
+                        جسم الإنسان البالغ يحتوي على أكثر من <strong class="text-pink-600 text-4xl block my-4">30 تريليون خلية!</strong>
+                        كلها تشتغل ليل ونهار عشانك.
+                    </p>
+                    <button onclick="document.getElementById('fun-fact-modal').classList.add('hidden')" class="px-8 py-3 bg-indigo-600 text-white rounded-full font-bold text-lg hover:bg-indigo-700">واو! إغلاق</button>
                 </div>
             </div>
         </section>
 
-        <!-- الشريحة 3: أنواع الخلايا (بطاقات تفاعلية) -->
+        <!-- الشريحة 3: المحاكي -->
         <section class="slide" id="slide-2">
-            <div class="content-z flex flex-col text-center w-full">
-                <h2 class="text-3xl md:text-4xl font-bold text-purple-700 mb-4">أنواع الخلايا الأساسية 🌿🐾</h2>
-                <p class="text-slate-500 mb-8">(المس البطاقة لقلبها)</p>
+            <div class="content-z flex flex-col items-center">
+                <div class="text-center mb-8">
+                    <div class="interactive-badge mb-4 text-lg">🚀 محاكي تفاعلي: ادخلي داخل الخلية!</div>
+                    <h2 class="text-4xl md:text-5xl font-bold text-indigo-900 mb-4">اكتشفي الأسرار من الداخل 🔍</h2>
+                    <p class="text-xl text-slate-600">اضغطي على الزر للتكبير، ثم <strong class="text-pink-600 border-b-2 border-pink-300">اضغطي على الأشكال الملونة</strong> لاكتشاف وظيفتها.</p>
+                </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row items-center gap-12 w-full justify-center mt-4">
                     
-                    <!-- بطاقة الخلية الحيوانية -->
-                    <div class="flip-container" onclick="this.classList.toggle('active')">
-                        <div class="flip-card shadow-lg rounded-3xl">
-                            <!-- الوجه الأمامي -->
-                            <div class="flip-front">
-                                <div class="text-7xl mb-4">🦁</div>
-                                <h3 class="text-3xl font-bold text-rose-600">الخلية الحيوانية</h3>
-                            </div>
-                            <!-- الوجه الخلفي -->
-                            <div class="flip-back back-animal">
-                                <h3 class="text-2xl font-bold text-rose-700 mb-4">خصائصها</h3>
-                                <p class="text-rose-900 text-lg leading-relaxed px-4">موجودة في أجسامنا والحيوانات. شكلها غير منتظم وتقدر تتغير.</p>
-                                <div class="mt-4 flex flex-wrap gap-2 justify-center">
-                                    <span class="px-3 py-1 bg-white text-rose-600 rounded-full text-sm font-bold shadow-sm">بدون جدار خلوي</span>
-                                    <span class="px-3 py-1 bg-white text-rose-600 rounded-full text-sm font-bold shadow-sm">فجوات صغيرة</span>
+                    <!-- الخلية التفاعلية -->
+                    <div class="relative">
+                        <!-- زر التكبير -->
+                        <button id="zoom-btn" onclick="toggleZoom()" class="absolute -top-16 left-1/2 transform -translate-x-1/2 z-30 bg-indigo-600 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-indigo-700 flex items-center gap-2 pulse-btn">
+                            <span>تكبير الدخول 🔍</span>
+                        </button>
+
+                        <div id="cell-simulation-container" class="relative z-20">
+                            <div class="main-cell morph-cell" id="main-cell-shape">
+                                <!-- العضيات -->
+                                <div class="organelle org-nucleus" onclick="showOrganelleInfo('النواة (المدير)', '🧠', 'هي الإدارة العليا! تتحكم في كل الخلية وفيها شفرتك الوراثية (DNA) اللي تحدد كل صفاتك.', 'text-purple-700', 'bg-purple-100')">
+                                    <span class="text-[3.5rem] drop-shadow-md">🧠</span>
+                                </div>
+                                <div class="organelle org-mito" onclick="showOrganelleInfo('الميتوكندريا (مصنع الطاقة)', '⚡', 'هنا يتم حرق الغذاء لتوليد الطاقة! بدونها الخلية ما تقدر تتحرك ولا تعيش.', 'text-orange-700', 'bg-orange-100')">
+                                    <span class="text-[2.5rem] drop-shadow-md">⚡</span>
+                                </div>
+                                <div class="organelle org-vacuole" onclick="showOrganelleInfo('الفجوة (المخزن)', '💧', 'عبارة عن مستودع صغير، تخزن فيه الخلية المويه، الأكل، وحتى الفضلات.', 'text-blue-700', 'bg-blue-100')">
+                                    <span class="text-[2.5rem] drop-shadow-md">💧</span>
+                                </div>
+                                <div class="organelle org-golgi" onclick="showOrganelleInfo('الغشاء البلازمي (الحارس)', '🛡️', 'الجدار المرن اللي يحيط بالخلية، يشتغل كحارس أمن يقرر إيش يدخل وإيش يطلع.', 'text-teal-700', 'bg-teal-100')">
+                                    <span class="text-[2.5rem] drop-shadow-md">🛡️</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- بطاقة الخلية النباتية -->
-                    <div class="flip-container" onclick="this.classList.toggle('active')">
-                        <div class="flip-card shadow-lg rounded-3xl">
-                            <!-- الوجه الأمامي -->
-                            <div class="flip-front">
-                                <div class="text-7xl mb-4">🌻</div>
-                                <h3 class="text-3xl font-bold text-green-600">الخلية النباتية</h3>
+                    <!-- شاشة عرض معلومات العضيات -->
+                    <div id="organelle-info-panel" class="glass-card p-8 rounded-3xl w-full md:w-96 opacity-50 grayscale transition-all duration-500 min-h-[250px] flex flex-col justify-center border-4 border-transparent">
+                        <div class="text-center" id="info-placeholder">
+                            <span class="text-5xl mb-4 block opacity-50">👆</span>
+                            <p class="text-lg text-slate-500 font-bold">اضغطي على أي جزء داخل الخلية بعد التكبير لتعرفي وظيفته!</p>
+                        </div>
+                        <div id="info-content" class="hidden">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div id="info-icon" class="w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-inner"></div>
+                                <h3 id="info-title" class="text-2xl font-bold"></h3>
                             </div>
-                            <!-- الوجه الخلفي -->
-                            <div class="flip-back back-plant">
-                                <h3 class="text-2xl font-bold text-green-800 mb-4">خصائصها</h3>
-                                <p class="text-green-900 text-lg leading-relaxed px-4">في الأشجار والنباتات. شكلها يشبه الصندوق وثابتة.</p>
-                                <div class="mt-4 flex flex-wrap gap-2 justify-center">
-                                    <span class="px-3 py-1 bg-white text-green-700 rounded-full text-sm font-bold shadow-sm">جدار خلوي قوي</span>
-                                    <span class="px-3 py-1 bg-white text-green-700 rounded-full text-sm font-bold shadow-sm">بلاستيدات خضراء</span>
-                                </div>
-                            </div>
+                            <p id="info-desc" class="text-xl text-slate-700 leading-relaxed"></p>
                         </div>
                     </div>
 
@@ -232,81 +308,164 @@
             </div>
         </section>
 
-        <!-- الشريحة 4: جولة داخل الخلية -->
+        <!-- الشريحة 4: أنواع الخلايا -->
         <section class="slide" id="slide-3">
-            <div class="content-z">
-                <h2 class="text-3xl md:text-4xl font-bold text-center text-teal-700 mb-12">أجزاء الخلية من الداخل 🔍</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="glass-card p-6 md:p-8 rounded-3xl text-center hover:bg-teal-50 transition-colors duration-300">
-                        <div class="w-16 h-16 md:w-20 md:h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4 floating">
-                            <span class="text-3xl md:text-4xl">🧠</span>
+            <div class="content-z flex flex-col text-center w-full">
+                <div class="interactive-badge mb-6 mx-auto text-sm">🔄 تفاعلي: اضغطي على البطاقة لقلبها</div>
+                <h2 class="text-4xl md:text-5xl font-bold text-pink-600 mb-12">حيوانية أم نباتية؟ 🌿🐾</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto w-full">
+                    <!-- الخلية الحيوانية -->
+                    <div class="flip-container" onclick="this.classList.toggle('active')">
+                        <div class="flip-card">
+                            <div class="flip-front">
+                                <div class="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center text-5xl mb-6">🦁</div>
+                                <h3 class="text-3xl font-bold text-rose-600 mb-2">الخلية الحيوانية</h3>
+                                <p class="text-slate-500 mb-4">(موجودة في أجسامنا)</p>
+                                <span class="px-4 py-2 bg-slate-100 rounded-full text-slate-600 text-sm font-bold flex items-center gap-2">اضغطي للقلب <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></span>
+                            </div>
+                            <div class="flip-back bg-rose-grad">
+                                <h3 class="text-3xl font-bold mb-6 border-b border-white/30 pb-4">خصائصها المميزة</h3>
+                                <ul class="text-xl space-y-4 text-right inline-block">
+                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> شكلها مرن وتقدر تتغير.</li>
+                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> <strong class="text-yellow-200">ليس لها</strong> جدار خلوي صلب.</li>
+                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> فجواتها صغيرة جداً.</li>
+                                </ul>
+                            </div>
                         </div>
-                        <h3 class="text-xl md:text-2xl font-bold text-teal-800 mb-3">النواة (المدير)</h3>
-                        <p class="text-slate-600">تحتوي على المعلومات الوراثية (DNA) وتتحكم في كل شيء.</p>
                     </div>
-                    <div class="glass-card p-6 md:p-8 rounded-3xl text-center hover:bg-orange-50 transition-colors duration-300 md:mt-8">
-                        <div class="w-16 h-16 md:w-20 md:h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 floating" style="animation-delay: 1s;">
-                            <span class="text-3xl md:text-4xl">⚡</span>
+
+                    <!-- الخلية النباتية -->
+                    <div class="flip-container" onclick="this.classList.toggle('active')">
+                        <div class="flip-card">
+                            <div class="flip-front">
+                                <div class="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center text-5xl mb-6">🌻</div>
+                                <h3 class="text-3xl font-bold text-teal-600 mb-2">الخلية النباتية</h3>
+                                <p class="text-slate-500 mb-4">(موجودة في الأشجار والنباتات)</p>
+                                <span class="px-4 py-2 bg-slate-100 rounded-full text-slate-600 text-sm font-bold flex items-center gap-2">اضغطي للقلب <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></span>
+                            </div>
+                            <div class="flip-back bg-teal-grad">
+                                <h3 class="text-3xl font-bold mb-6 border-b border-white/30 pb-4">خصائصها المميزة</h3>
+                                <ul class="text-xl space-y-4 text-right inline-block">
+                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> شكلها ثابت يشبه الصندوق.</li>
+                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> لها <strong class="text-yellow-200">جدار خلوي</strong> يحميها.</li>
+                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> فيها بلاستيدات خضراء (لتصنع أكلها).</li>
+                                </ul>
+                            </div>
                         </div>
-                        <h3 class="text-xl md:text-2xl font-bold text-orange-800 mb-3">الميتوكندريا</h3>
-                        <p class="text-slate-600">مصنع الطاقة، تحرق الغذاء لتعطي الخلية طاقة ونشاط.</p>
-                    </div>
-                    <div class="glass-card p-6 md:p-8 rounded-3xl text-center hover:bg-blue-50 transition-colors duration-300">
-                        <div class="w-16 h-16 md:w-20 md:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 floating" style="animation-delay: 2s;">
-                            <span class="text-3xl md:text-4xl">🛡️</span>
-                        </div>
-                        <h3 class="text-xl md:text-2xl font-bold text-blue-800 mb-3">الغشاء البلازمي</h3>
-                        <p class="text-slate-600">الحارس اللي يحيط بالخلية ويقرر إيش يدخل وإيش يطلع.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- الشريحة 5: اللعبة التفاعلية -->
+        <!-- الشريحة 5: مواضيع متقدمة -->
         <section class="slide" id="slide-4">
-            <div class="content-z flex flex-col items-center w-full">
-                <div class="glass-card p-6 md:p-10 rounded-3xl w-full max-w-2xl text-center">
-                    <h2 class="text-3xl font-bold text-indigo-600 mb-2">لعبة: اختبر معلوماتك 🎮</h2>
-                    <p class="text-slate-500 mb-8">نشوف مين المركز معنا؟</p>
+            <div class="content-z w-full">
+                <div class="interactive-badge mb-6 mx-auto flex w-fit text-sm">👆 تفاعلي: اضغطي على العناوين للتنقل</div>
+                <h2 class="text-4xl font-bold text-center text-indigo-900 mb-8">إبداعات علمية مذهلة 🌟</h2>
+                
+                <div class="glass-card rounded-[2rem] overflow-hidden max-w-4xl mx-auto">
+                    <!-- Tabs Header -->
+                    <div class="flex flex-col md:flex-row bg-slate-100 border-b border-slate-200">
+                        <button onclick="switchTab('tab1')" id="btn-tab1" class="flex-1 py-4 text-xl font-bold text-indigo-600 bg-white border-b-4 border-indigo-600 transition">✨ الخلايا الجذعية</button>
+                        <button onclick="switchTab('tab2')" id="btn-tab2" class="flex-1 py-4 text-xl font-bold text-slate-500 hover:bg-slate-50 transition border-b-4 border-transparent">🧫 زراعة الأنسجة</button>
+                        <button onclick="switchTab('tab3')" id="btn-tab3" class="flex-1 py-4 text-xl font-bold text-slate-500 hover:bg-slate-50 transition border-b-4 border-transparent">👩‍🚀 الخلايا في الفضاء</button>
+                    </div>
                     
-                    <div id="quiz-container" class="min-h-[200px]">
-                        <h3 id="question-text" class="text-xl md:text-2xl font-bold text-slate-700 mb-6 leading-relaxed">جزء الخلية اللي يعتبر "المدير" ومسؤول عن التحكم هو:</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="answers-container">
-                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 click-bounce">الميتوكندريا</button>
-                            <button onclick="checkAnswer(this, true)" class="p-4 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 click-bounce">النواة</button>
-                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 click-bounce">الغشاء البلازمي</button>
-                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 click-bounce">الجدار الخلوي</button>
+                    <!-- Tab 1 -->
+                    <div id="tab1" class="tab-content active p-8 md:p-12">
+                        <div class="flex flex-col md:flex-row items-center gap-8">
+                            <div class="text-7xl bg-indigo-100 p-6 rounded-full">🪄</div>
+                            <div>
+                                <h3 class="text-3xl font-bold text-indigo-800 mb-4">الخلايا السحرية (الجذعية)</h3>
+                                <p class="text-xl text-slate-600 leading-relaxed mb-4">هي خلايا "خام" تشبه الصلصال! الدكاترة يقدرون يشكلونها ويحولونها لأي نوع خلية يحتاجه المريض (خلايا قلب، دم، عظم، أو أعصاب).</p>
+                                <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded-full font-bold">ثورة في علاج الأمراض المستعصية!</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab 2 -->
+                    <div id="tab2" class="tab-content p-8 md:p-12">
+                        <div class="flex flex-col md:flex-row items-center gap-8">
+                            <div class="text-7xl bg-emerald-100 p-6 rounded-full">🌱</div>
+                            <div>
+                                <h3 class="text-3xl font-bold text-emerald-800 mb-4">من خلية إلى نبتة كاملة!</h3>
+                                <p class="text-xl text-slate-600 leading-relaxed mb-4">زراعة الأنسجة تعني أننا نأخذ خلايا قليلة جداً من نبتة، ونحطها في مختبر فيه أكل وحرارة ممتازة، فتتكاثر وتصير نباتات كاملة وكثيرة.</p>
+                                <span class="inline-block bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full font-bold">تستخدم لإنقاذ النباتات النادرة من الانقراض.</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- رسالة النجاح المخفية -->
-                    <div id="success-message" class="hidden flex-col items-center justify-center py-10">
-                        <div class="text-7xl mb-4">🏆</div>
-                        <h3 class="text-3xl font-bold text-green-600 mb-2">ممتاز! إجابة صحيحة</h3>
-                        <p class="text-slate-600 text-lg">بطلة ومركزة معنا بالرحلة!</p>
-                        <button onclick="scrollSlide(1)" class="mt-6 px-6 py-2 bg-green-500 text-white rounded-full font-bold hover:bg-green-600 click-bounce">الذهاب للنهاية</button>
+                    <!-- Tab 3 -->
+                    <div id="tab3" class="tab-content p-8 md:p-12">
+                        <div class="flex flex-col md:flex-row items-center gap-8">
+                            <div class="text-7xl bg-purple-100 p-6 rounded-full">🚀</div>
+                            <div>
+                                <h3 class="text-3xl font-bold text-purple-800 mb-4">تجارب في محطة الفضاء</h3>
+                                <p class="text-xl text-slate-600 leading-relaxed mb-4">العلماء يدرسون الخلايا في الفضاء لأن "انعدام الجاذبية" يخلي الخلايا تنقسم وتتصرف بشكل مختلف تماماً عن الأرض!</p>
+                                <span class="inline-block bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold">يساعدنا في اكتشاف أدوية جديدة جداً.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- الشريحة 6: اللعبة -->
+        <section class="slide" id="slide-5">
+            <div class="content-z flex flex-col items-center">
+                <div class="glass-card p-8 md:p-12 rounded-[2.5rem] w-full max-w-3xl text-center border-4 border-indigo-100 shadow-2xl relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-pink-100 rounded-full mix-blend-multiply opacity-50"></div>
+                    <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-blue-100 rounded-full mix-blend-multiply opacity-50"></div>
+                    
+                    <h2 class="text-4xl font-bold text-indigo-600 mb-4 relative z-10">لعبة: اختبار الذكاء 🧠🎮</h2>
+                    <p class="text-xl text-slate-500 mb-8 relative z-10">نشوف مين اللي كانت مركزة معنا بالرحلة؟</p>
+                    
+                    <div id="quiz-container" class="relative z-10 min-h-[250px]">
+                        <div class="bg-indigo-50 rounded-2xl p-6 mb-8 border border-indigo-100">
+                            <h3 id="question-text" class="text-2xl font-bold text-indigo-900 leading-relaxed">أي جزء من الخلية يشتغل كـ "حارس أمن" ويقرر إيش يدخل وإيش يطلع؟</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="answers-container">
+                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm transition">النواة</button>
+                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm transition">الميتوكندريا</button>
+                            <button onclick="checkAnswer(this, true)" class="p-4 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm transition">الغشاء البلازمي</button>
+                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm transition">الجدار الخلوي</button>
+                        </div>
+                    </div>
+
+                    <div id="success-message" class="hidden flex-col items-center justify-center py-10 relative z-10">
+                        <div class="text-8xl mb-6 bounce-arrow">🏆</div>
+                        <h3 class="text-4xl font-bold text-green-500 mb-4">ممتازة جداً!</h3>
+                        <p class="text-2xl text-slate-600 mb-8">إجابة صحيحة، أنتِ عالمة المستقبل!</p>
+                        <button onclick="scrollSlide(1)" class="px-10 py-4 bg-green-500 text-white rounded-full text-xl font-bold hover:bg-green-600 shadow-lg hover:scale-105 transition">النهاية والتتويج 🎉</button>
                     </div>
 
                 </div>
             </div>
         </section>
 
-        <!-- الشريحة 6: النهاية -->
-        <section class="slide" id="slide-5">
+        <!-- الشريحة 7: النهاية -->
+        <section class="slide" id="slide-6">
             <div class="content-z flex flex-col items-center justify-center text-center h-full">
-                <div class="text-8xl mb-6 pulse-anim">✨</div>
-                <h2 class="text-4xl md:text-5xl font-black text-indigo-700 mb-6">شكراً لاستماعكم وتفاعلكم</h2>
-                <p class="text-xl md:text-2xl text-slate-600 mb-10">أتمنى تكون رحلتنا في عالم الخلايا أعجبتكم!</p>
-                <div class="glass-card px-10 py-5 rounded-full inline-block text-xl font-bold text-indigo-900 shadow-sm border-2 border-indigo-100">
-                    إعداد: لمار الرشيدي
+                <div class="w-40 h-40 bg-white rounded-full flex items-center justify-center shadow-2xl mb-8 pulse-btn border-8 border-indigo-50">
+                    <span class="text-7xl">👩‍🔬✨</span>
                 </div>
+                <h2 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500 mb-6">شكراً لتركيزكم!</h2>
+                <p class="text-3xl text-slate-600 mb-12">أتمنى تكون رحلتنا التفاعلية أعجبتكم.</p>
+                
+                <div class="glass-card px-12 py-6 rounded-full inline-block border-2 border-indigo-200 mb-8">
+                    <p class="text-lg text-slate-500 mb-1">إعداد وتصميم الطالبة:</p>
+                    <p class="text-3xl font-bold text-indigo-900">لمار نادر الرشيدي</p>
+                </div>
+
+                <p class="text-sm text-slate-400 mt-2">تم التصميم بواسطة Gemini Pro</p>
             </div>
         </section>
 
     </div>
 
     <script>
-        // إعداد التنقل
+        // التنقل بين الشرائح والدوائر
         const container = document.getElementById('presentation');
         const slides = document.querySelectorAll('.slide');
         const totalSlides = slides.length;
@@ -315,7 +474,7 @@
         const dotsContainer = document.querySelector('.nav-dots');
         for (let i = 0; i < totalSlides; i++) {
             const dot = document.createElement('button');
-            dot.className = `w-3 h-3 rounded-full transition-all duration-300 ${i === 0 ? 'bg-indigo-600 scale-125' : 'bg-slate-300 shadow-md'}`;
+            dot.className = `w-4 h-4 rounded-full transition-all duration-300 ${i === 0 ? 'bg-indigo-600 scale-125 shadow-md' : 'bg-slate-300'}`;
             dot.onclick = () => goToSlide(i);
             dotsContainer.appendChild(dot);
         }
@@ -324,17 +483,13 @@
         function updateDots(index) {
             dots.forEach((dot, i) => {
                 if (i === index) {
-                    dot.classList.remove('bg-slate-300');
-                    dot.classList.add('bg-indigo-600', 'scale-125');
+                    dot.className = 'w-4 h-4 rounded-full transition-all duration-300 bg-indigo-600 scale-125 shadow-md';
                 } else {
-                    dot.classList.remove('bg-indigo-600', 'scale-125');
-                    dot.classList.add('bg-slate-300');
+                    dot.className = 'w-4 h-4 rounded-full transition-all duration-300 bg-slate-300';
                 }
             });
-            // إذا وصلنا الشريحة الأخيرة، نشغل احتفال خفيف
-            if(index === totalSlides - 1) {
-                setTimeout(fireConfetti, 500);
-            }
+            // تشغيل احتفال في الشريحة الأخيرة
+            if(index === totalSlides - 1) setTimeout(fireConfetti, 500);
         }
 
         function scrollSlide(direction) {
@@ -354,19 +509,98 @@
             const scrollPosition = container.scrollTop;
             const windowHeight = window.innerHeight;
             const newIndex = Math.round(scrollPosition / windowHeight);
-            
             if (newIndex !== currentSlide && newIndex >= 0 && newIndex < totalSlides) {
                 currentSlide = newIndex;
                 updateDots(currentSlide);
             }
         });
 
+        // دعم الكيبورد للتنقل
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') scrollSlide(1);
             else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') scrollSlide(-1);
         });
 
-        // منطق اللعبة
+        // --- محاكي الخلية التفاعلي ---
+        let isZoomed = false;
+        function toggleZoom() {
+            const container = document.getElementById('cell-simulation-container');
+            const btn = document.getElementById('zoom-btn');
+            const panel = document.getElementById('organelle-info-panel');
+            const cell = document.getElementById('main-cell-shape');
+            
+            isZoomed = !isZoomed;
+            
+            if(isZoomed) {
+                container.classList.add('zoomed-in');
+                btn.innerHTML = '<span>تصغير 🔙</span>';
+                btn.classList.remove('pulse-btn');
+                btn.classList.replace('bg-indigo-600', 'bg-pink-500');
+                
+                // إيقاف حركة الخلية لتسهيل الضغط
+                cell.classList.remove('morph-cell');
+                
+                // تفعيل لوحة المعلومات
+                panel.classList.remove('opacity-50', 'grayscale');
+                panel.classList.add('border-indigo-300', 'shadow-xl', 'bg-white/95');
+            } else {
+                container.classList.remove('zoomed-in');
+                btn.innerHTML = '<span>تكبير الدخول 🔍</span>';
+                btn.classList.add('pulse-btn');
+                btn.classList.replace('bg-pink-500', 'bg-indigo-600');
+                
+                cell.classList.add('morph-cell');
+                
+                // إعادة لوحة المعلومات لحالة الانتظار
+                panel.classList.add('opacity-50', 'grayscale');
+                panel.classList.remove('border-indigo-300', 'shadow-xl', 'bg-white/95');
+                document.getElementById('info-content').classList.add('hidden');
+                document.getElementById('info-placeholder').classList.remove('hidden');
+            }
+        }
+
+        function showOrganelleInfo(title, emoji, desc, textColor, bgColor) {
+            if(!isZoomed) {
+                // إذا ضغطت بدون تكبير، نسوي تكبير تلقائي أول
+                toggleZoom();
+            }
+            
+            document.getElementById('info-placeholder').classList.add('hidden');
+            const content = document.getElementById('info-content');
+            content.classList.remove('hidden');
+            
+            // إضافة تأثير اختفاء وظهور لتغيير المحتوى
+            content.style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('info-title').innerText = title;
+                document.getElementById('info-title').className = `text-2xl font-bold ${textColor}`;
+                document.getElementById('info-icon').innerText = emoji;
+                document.getElementById('info-icon').className = `w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-inner ${bgColor} ${textColor}`;
+                document.getElementById('info-desc').innerText = desc;
+                
+                content.style.transition = 'opacity 0.4s';
+                content.style.opacity = '1';
+            }, 200);
+        }
+
+        // --- التابات (مواضيع متقدمة) ---
+        function switchTab(tabId) {
+            // إخفاء كل المحتوى
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // إعادة الأزرار للون الرمادي
+            document.querySelectorAll('[id^="btn-tab"]').forEach(el => {
+                el.classList.remove('text-indigo-600', 'bg-white', 'border-indigo-600');
+                el.classList.add('text-slate-500', 'border-transparent');
+            });
+            
+            // تفعيل المحتوى والزر المختار
+            document.getElementById(tabId).classList.add('active');
+            const btn = document.getElementById('btn-' + tabId);
+            btn.classList.remove('text-slate-500', 'border-transparent');
+            btn.classList.add('text-indigo-600', 'bg-white', 'border-indigo-600');
+        }
+
+        // --- اللعبة ---
         function checkAnswer(button, isCorrect) {
             if(isCorrect) {
                 button.classList.remove('border-slate-200', 'text-slate-600');
@@ -380,10 +614,11 @@
                 }, 800);
             } else {
                 button.classList.remove('border-slate-200');
-                button.classList.add('bg-red-100', 'border-red-400', 'text-red-600', 'shake-anim');
+                button.classList.add('bg-red-100', 'border-red-400', 'text-red-600');
+                button.style.animation = "bounce-x 0.4s";
+                
                 setTimeout(() => {
-                    button.classList.remove('shake-anim');
-                    // Reset styling after a bit
+                    button.style.animation = "";
                     setTimeout(() => {
                         button.classList.remove('bg-red-100', 'border-red-400', 'text-red-600');
                         button.classList.add('bg-white', 'border-slate-200', 'text-slate-600');
@@ -392,34 +627,19 @@
             }
         }
 
-        // إطلاق الاحتفالات
+        // --- احتفالات القصاصات ---
         function fireConfetti() {
             var duration = 3000;
             var end = Date.now() + duration;
-
             (function frame() {
-                confetti({
-                    particleCount: 5,
-                    angle: 60,
-                    spread: 55,
-                    origin: { x: 0 },
-                    colors: ['#4f46e5', '#db2777', '#0d9488']
-                });
-                confetti({
-                    particleCount: 5,
-                    angle: 120,
-                    spread: 55,
-                    origin: { x: 1 },
-                    colors: ['#4f46e5', '#db2777', '#0d9488']
-                });
-
-                if (Date.now() < end) {
-                    requestAnimationFrame(frame);
-                }
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#4f46e5', '#db2777', '#0d9488'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#4f46e5', '#db2777', '#0d9488'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
             }());
         }
     </script>
 </body>
 </html>
+
 
 ```
