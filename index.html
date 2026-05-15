@@ -279,7 +279,6 @@
     <div class="card"><div class="card-head"><h3>أقل المراكز التزاماً</h3><p>تحتاج تدخل</p></div><div class="chart-box xtall"><canvas id="worstComplianceChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعلى المراكز التزاماً</h3><p>نماذج يُحتذى بها</p></div><div class="chart-box xtall"><canvas id="bestComplianceChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعداد العينات المتأخرة</h3><p>تجاوزت ٤.٥ ساعة — أعلى ١٥ مركز</p></div><div class="chart-box xtall"><canvas id="overTargetChart"></canvas></div></div>
-    <div class="card"><div class="card-head"><h3>P90 لكل مركز</h3><p>الزمن الذي تصل ضمنه ٩٠% من العينات</p></div><div class="chart-box xtall"><canvas id="p90Chart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعلى مدة وصول مسجلة</h3><p>أسوأ حالة في كل مركز</p></div><div class="chart-box xtall"><canvas id="worstCaseChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>توزيع المراكز حسب الالتزام</h3><p>كم مركز عند كل مستوى</p></div><div class="chart-box"><canvas id="phcComplianceChart"></canvas></div></div>
 
@@ -296,8 +295,8 @@
     <div class="card"><div class="card-head"><h3>أداء وصول العينة حسب اليوم</h3><p>متوسط الوصول والالتزام لكل يوم</p></div><div class="chart-box tall"><canvas id="arrivalByDayChart"></canvas></div></div>
 
     <!-- 5) تصنيف المراكز -->
-    <div class="section" style="--c: var(--pink)"><span class="bar"></span><h2>تصنيف المراكز</h2><span class="desc">A / B / C / D</span></div>
-    <div class="card"><div class="card-head"><h3>تصنيف ذكي حسب الأداء</h3><p>حسب الالتزام بهدف ٤.٥ ساعة</p></div><div class="tier-grid" id="tierList"></div></div>
+    <div class="section" style="--c: var(--pink)"><span class="bar"></span><h2>تصنيف المراكز</h2><span class="desc">حسب الالتزام</span></div>
+    <div class="card"><div class="card-head"><h3>تصنيف المراكز حسب الأداء</h3><p>حسب الالتزام بهدف ٤.٥ ساعة</p></div><div class="tier-grid" id="tierList"></div></div>
 
     <!-- 6) FREE TESTS SECTION — جديد ١٢ مؤشر -->
     <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>تحليل الفحوصات</h2><span class="desc">١٢ مؤشر للفحوصات</span></div>
@@ -317,7 +316,7 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h3>الفحوصات حسب الفئة</h3><p>كيمياء، CBC، هرمونات، فيتامينات…</p></div>
+      <div class="card-head"><h3>الفحوصات حسب الفئة</h3><p>Chemistry, CBC, Hormones, Vitamins…</p></div>
       <div class="chart-box tall"><canvas id="testCatChart"></canvas></div>
     </div>
 
@@ -390,7 +389,7 @@
       <input type="text" class="search" id="phcSearch" placeholder="🔍 ابحث عن مركز…" />
       <div class="table-wrap"><div class="table-scroll">
         <table id="phcTable">
-          <thead><tr><th>#</th><th>المركز</th><th>عينات</th><th>مرضى</th><th>الالتزام</th><th>متوسط</th><th>وسيط</th><th>P90</th><th>أعلى</th><th>متأخرة</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th><th>إعادات</th><th>تقييم</th></tr></thead>
+          <thead><tr><th>#</th><th>المركز</th><th>عينات</th><th>مرضى</th><th>الالتزام</th><th>متوسط</th><th>وسيط</th><th>أعلى</th><th>متأخرة</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th><th>إعادات</th><th>تقييم</th></tr></thead>
           <tbody></tbody>
         </table>
       </div></div>
@@ -424,23 +423,23 @@ const shortName = s => (s || '').replace(' Health Center','').replace(' Primary 
 
 function categorize(name) {
   const n = (name || '').toUpperCase();
-  if (/HBSAG|HBS AB|HCV|HIV|RUBELLA|VARICELLA|MEASLES|BRUCELLA|HEPATITIS|HELICOBACTER PYLORI/.test(n)) return 'مصلية';
+  if (/HBSAG|HBS AB|HCV|HIV|RUBELLA|VARICELLA|MEASLES|BRUCELLA|HEPATITIS|HELICOBACTER PYLORI/.test(n)) return 'Serology';
   if (/^CBC( |$)|CBC DIFF/.test(n)) return 'CBC';
-  if (/VIT\.D|VITAMIN D|25OH/.test(n)) return 'فيتامين د';
-  if (/VITAMIN B12|B12/.test(n)) return 'فيتامين B12';
-  if (/FOLATE/.test(n)) return 'حمض الفوليك';
-  if (/FERRITIN/.test(n)) return 'فيريتين';
-  if (/TSH|FREE T3|FREE T4|^T3|^T4|THYROID|THYROGLOBULIN/.test(n)) return 'غدة درقية';
-  if (/HCG|TESTOSTERONE|PROLACTIN|FSH|LH|PROGESTERONE|PSA|PTH/.test(n)) return 'هرمونات';
-  if (/CHOLESTEROL|TRIGLYCERID|HDL|LDL|LIPID/.test(n)) return 'دهون';
-  if (/GLUCOSE|HBA1C|GLYCOSYLATED/.test(n)) return 'سكر';
-  if (/AST|ALT|ALP|GGT|BILIRUBIN|ALBUMIN|LFT|LIVER|TOTAL PROTEIN|ALKALINE PHOSPHATASE/.test(n)) return 'كبد';
-  if (/CREATININE|BUN|UREA|URIC ACID|EGFR|MICROALBUMIN/.test(n)) return 'كلى';
-  if (/SODIUM|POTASSIUM|CHLORIDE|CALCIUM|MAGNESIUM|PHOSPHATE/.test(n)) return 'أملاح';
-  if (/IRON \(FE\)|^IRON|TIBC|UIBC/.test(n)) return 'حديد';
-  if (/C\. REACTIVE|CRP|ESR/.test(n)) return 'التهاب';
-  if (/URINE|FIT|STOOL|PREGNANCY/.test(n)) return 'بول/براز';
-  return 'أخرى';
+  if (/VIT\.D|VITAMIN D|25OH/.test(n)) return 'Vitamin D';
+  if (/VITAMIN B12|B12/.test(n)) return 'Vitamin B12';
+  if (/FOLATE/.test(n)) return 'Folate';
+  if (/FERRITIN/.test(n)) return 'Ferritin';
+  if (/TSH|FREE T3|FREE T4|^T3|^T4|THYROID|THYROGLOBULIN/.test(n)) return 'Thyroid';
+  if (/HCG|TESTOSTERONE|PROLACTIN|FSH|LH|PROGESTERONE|PSA|PTH/.test(n)) return 'Hormones';
+  if (/CHOLESTEROL|TRIGLYCERID|HDL|LDL|LIPID/.test(n)) return 'Lipids';
+  if (/GLUCOSE|HBA1C|GLYCOSYLATED/.test(n)) return 'Diabetes';
+  if (/AST|ALT|ALP|GGT|BILIRUBIN|ALBUMIN|LFT|LIVER|TOTAL PROTEIN|ALKALINE PHOSPHATASE/.test(n)) return 'Liver';
+  if (/CREATININE|BUN|UREA|URIC ACID|EGFR|MICROALBUMIN/.test(n)) return 'Kidney';
+  if (/SODIUM|POTASSIUM|CHLORIDE|CALCIUM|MAGNESIUM|PHOSPHATE/.test(n)) return 'Electrolytes';
+  if (/IRON \(FE\)|^IRON|TIBC|UIBC/.test(n)) return 'Iron';
+  if (/C\. REACTIVE|CRP|ESR/.test(n)) return 'Inflammation';
+  if (/URINE|FIT|STOOL|PREGNANCY/.test(n)) return 'Urine/Stool';
+  return 'Other';
 }
 
 const fileInput = document.getElementById('fileInput');
@@ -876,16 +875,16 @@ function renderHero(a) {
       <span>عينات <strong>${fmt(ar.count)}</strong></span>
       <span>متأخرة <strong>${fmt(ar.overTarget)}</strong></span>
       <span>متوسط <strong>${fmt2(ar.avg)}س</strong></span>
-      <span>P90 <strong>${fmt2(ar.p90)}س</strong></span>
+      <span>وسيط <strong>${fmt2(ar.median)}س</strong></span>
     </div>`;
 }
 
 function renderTierList(a) {
   const tiers = [
-    { name:'A — ممتاز', desc:'≥ 90%', c:'var(--green)', list: a.tiers.excellent },
-    { name:'B — جيد', desc:'75-89%', c:'var(--blue)', list: a.tiers.good },
-    { name:'C — متوسط', desc:'50-74%', c:'var(--orange)', list: a.tiers.fair },
-    { name:'D — ضعيف', desc:'< 50%', c:'var(--red)', list: a.tiers.poor },
+    { name:'ممتاز', desc:'≥ 90%', c:'var(--green)', list: a.tiers.excellent },
+    { name:'جيد', desc:'75-89%', c:'var(--blue)', list: a.tiers.good },
+    { name:'متوسط', desc:'50-74%', c:'var(--orange)', list: a.tiers.fair },
+    { name:'ضعيف', desc:'< 50%', c:'var(--red)', list: a.tiers.poor },
   ];
   document.getElementById('tierList').innerHTML = tiers.map(t => {
     const list = [...t.list].sort((a,b) => b.within - a.within);
@@ -907,8 +906,8 @@ function renderTestsKpis(a) {
   const k = [
     { c:'var(--blue)', l:'أنواع الفحوصات', v: fmt(s.tests), sub: `${s.parameters} قياس فردي` },
     { c:'var(--green)', l:'الأكثر طلباً', v: topTest ? fmt(topTest.samples) : '—', sub: topTest ? trunc(topTest.name, 18) : '—' },
-    { c:'var(--red)', l:'الأعلى خروجاً', v: mostAb ? fmt1(mostAb.abPct)+'%' : '—', sub: mostAb ? trunc(mostAb.name, 18) : '—' },
-    { c:'var(--orange)', l:'إجمالي خارج المعدل', v: fmt1(s.abRate)+'%', sub: `${fmt(s.high + s.low)} حالة` },
+    { c:'var(--red)', l:'الأعلى في النتائج غير الطبيعية', v: mostAb ? fmt1(mostAb.abPct)+'%' : '—', sub: mostAb ? trunc(mostAb.name, 18) : '—' },
+    { c:'var(--orange)', l:'نسبة الإجمالي غير الطبيعي', v: fmt1(s.abRate)+'%', sub: `${fmt(s.high + s.low)} حالة` },
   ];
   document.getElementById('testsKpis').innerHTML = k.map(x => `
     <div class="kpi" style="--c:${x.c}">
@@ -1128,13 +1127,6 @@ function renderAllCharts(a) {
     options: hBarOpts(' عينة')
   });
 
-  const p90Sorted = [...eligible].sort((x,y) => y.p90 - x.p90).slice(0, 15);
-  STATE.charts.p90 = new Chart(document.getElementById('p90Chart'), {
-    type: 'bar',
-    data: { labels: p90Sorted.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: p90Sorted.map(p => p.p90), backgroundColor: ctx => gradH(ctx, 'rgba(110,196,247,0.95)', 'rgba(110,196,247,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
-    options: hBarOpts(' س')
-  });
-
   const worstCase = [...eligible].sort((x,y) => y.worst - x.worst).slice(0, 15);
   STATE.charts.worstCase = new Chart(document.getElementById('worstCaseChart'), {
     type: 'bar',
@@ -1308,7 +1300,6 @@ function renderPhcTable(a, filter) {
         <td class="num ${wCls}">${r.within == null ? '—' : fmt1(r.within)+'%'}</td>
         <td class="num ${avgCls}">${r.avg == null ? '—' : fmt2(r.avg)+'س'}</td>
         <td class="num">${r.median == null ? '—' : fmt2(r.median)+'س'}</td>
-        <td class="num">${r.p90 == null ? '—' : fmt2(r.p90)+'س'}</td>
         <td class="num ${r.worst > 24 ? 't-bad' : r.worst > 8 ? 't-warn' : ''}">${r.worst == null ? '—' : fmt2(r.worst)+'س'}</td>
         <td class="num ${r.overTarget > 50 ? 't-bad' : r.overTarget > 20 ? 't-warn' : ''}">${fmt(r.overTarget)}</td>
         <td class="num t-n">${fmt(r.n)}</td>
@@ -1432,10 +1423,10 @@ async function exportPdf(mode = 'mobile') {
       // Use a high pixel-to-mm ratio for crisp rendering
       const pxPerMm = imgs[0] ? (imgs[0].w / pageW_mm) : (scale * 3.78);
 
-      const HEADER_HEIGHT_MM = 18; // header height in mm
+      const HEADER_HEIGHT_MM = isDesktop ? 38 : 42; // tall header
       const totalContentPx = imgs.reduce((a, im) => a + im.h, 0);
       const totalContentMm = totalContentPx / pxPerMm;
-      const pageH_mm = HEADER_HEIGHT_MM + totalContentMm + 6; // a tiny bottom padding
+      const pageH_mm = HEADER_HEIGHT_MM + totalContentMm + 6;
 
       // Create PDF with custom long page size
       pdf = new jsPDF({
@@ -1449,23 +1440,34 @@ async function exportPdf(mode = 'mobile') {
       pdf.setFillColor(10, 14, 26);
       pdf.rect(0, 0, pageW_mm, pageH_mm, 'F');
 
-      // HEADER
-      pdf.setFillColor(21, 27, 47); // surface color
+      // HEADER — large and prominent
+      // Gradient-ish look using two rects
+      pdf.setFillColor(28, 35, 64); // surface-2
       pdf.rect(0, 0, pageW_mm, HEADER_HEIGHT_MM, 'F');
+      // Accent bar at top
+      pdf.setFillColor(139, 124, 229); // purple
+      pdf.rect(0, 0, pageW_mm, 1.2, 'F');
       // Bottom border
-      pdf.setDrawColor(35, 43, 71);
-      pdf.setLineWidth(0.2);
+      pdf.setDrawColor(45, 55, 89);
+      pdf.setLineWidth(0.3);
       pdf.line(0, HEADER_HEIGHT_MM, pageW_mm, HEADER_HEIGHT_MM);
-      // Header text
-      pdf.setTextColor(139, 124, 229);
-      pdf.setFontSize(7);
-      pdf.text('UNIFIED LAB CENTER', pageW_mm - 8, 6, { align: 'right' });
+
+      // Title — large
       pdf.setTextColor(231, 236, 247);
-      pdf.setFontSize(11);
-      pdf.text('Lab Center Indicators Report', pageW_mm - 8, 11, { align: 'right' });
-      pdf.setFontSize(8);
+      pdf.setFontSize(isDesktop ? 22 : 18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Lab Centers Performance Report', pageW_mm / 2, isDesktop ? 18 : 20, { align: 'center' });
+
+      // Subtitle line
+      pdf.setFontSize(isDesktop ? 11 : 10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(182, 167, 240); // purple-light
+      pdf.text('Unified Lab Center  —  Comprehensive Indicators', pageW_mm / 2, isDesktop ? 26 : 28, { align: 'center' });
+
+      // Stats line
+      pdf.setFontSize(isDesktop ? 10 : 9);
       pdf.setTextColor(136, 147, 179);
-      pdf.text(`${s.periodStart}  to  ${s.periodEnd}  |  ${s.samples.toLocaleString()} samples  |  ${s.centers} centers  |  ${s.tests} tests`, pageW_mm - 8, 15.5, { align: 'right' });
+      pdf.text(`${s.periodStart}   to   ${s.periodEnd}      ${s.samples.toLocaleString()} samples      ${s.centers} centers      ${s.tests} tests`, pageW_mm / 2, isDesktop ? 33 : 36, { align: 'center' });
 
       // Place all images stacked back-to-back, no gaps
       let yMm = HEADER_HEIGHT_MM;
