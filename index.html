@@ -135,6 +135,8 @@
   .t-l { color: var(--orange); font-weight: 600; }
   .bar-c { position: relative; }
   .bar-c .bg { position: absolute; inset: 4px 8px; background: rgba(139,124,229,0.18); border-radius: 3px; z-index: 0; }
+  .bar-c .bg.red { background: rgba(255,123,138,0.18); }
+  .bar-c .bg.green { background: rgba(126,224,184,0.18); }
   .bar-c > span { position: relative; z-index: 1; }
   .rating { color: var(--orange); letter-spacing: 1px; font-size: 10.5px; }
   .search { width: 100%; padding: 8px 11px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 11.5px; font-family: inherit; margin-bottom: 9px; }
@@ -144,15 +146,72 @@
   .tab.active { background: var(--purple); border-color: var(--purple); color: white; font-weight: 600; }
   .note { background: rgba(139,124,229,0.08); border: 1px solid rgba(139,124,229,0.22); border-radius: 9px; padding: 9px 11px; margin-bottom: 10px; font-size: 10.5px; line-height: 1.6; color: var(--muted); }
   .note strong { color: var(--text); font-weight: 600; }
+
+  /* TEST BREAKDOWN ROWS */
+  .test-row {
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .test-row:last-child { border-bottom: none; }
+  .test-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px; gap: 8px; flex-wrap: wrap;
+  }
+  .test-name { font-size: 11.5px; font-weight: 600; flex: 1; }
+  .test-count { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); flex-shrink: 0; }
+  .test-bar {
+    display: flex; height: 18px; border-radius: 4px;
+    overflow: hidden; background: var(--bg-2); margin-bottom: 4px;
+  }
+  .test-seg {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: white;
+  }
+  .test-seg.n { background: linear-gradient(90deg, #5fc99c, var(--green)); }
+  .test-seg.h { background: linear-gradient(90deg, var(--red), #e8616f); }
+  .test-seg.l { background: linear-gradient(90deg, var(--orange), #e89548); }
+  .test-meta { display: flex; gap: 10px; font-size: 9.5px; color: var(--muted); }
+  .test-meta .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
+  .chip { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; background: var(--bg-2); border: 1px solid var(--border); margin-left: 5px; vertical-align: middle; }
+
+  /* ALERT */
+  .alert-red {
+    background: linear-gradient(135deg, rgba(255,123,138,0.1), rgba(255,123,138,0.04));
+    border: 1px solid rgba(255,123,138,0.3);
+    border-radius: 11px; padding: 12px; margin-bottom: 10px;
+  }
+  .alert-red h4 { font-size: 12.5px; color: var(--red); margin-bottom: 4px; }
+  .alert-red p { font-size: 11px; color: var(--text); line-height: 1.55; }
+
   #app { display: none; }
   #app.show { display: block; }
   #upload-section { display: block; }
   #upload-section.hide { display: none; }
-  body.pdf-desktop .shell { max-width: 1100px !important; }
+
+  /* PDF MODE — critical for clean export without cutting */
+  body.pdf-mode .shell { padding: 18px 14px !important; }
+  body.pdf-mode .card,
+  body.pdf-mode .hero,
+  body.pdf-mode .alert-red,
+  body.pdf-mode .intro,
+  body.pdf-mode .kpi-row,
+  body.pdf-mode .insights-grid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  body.pdf-mode .section { page-break-after: avoid !important; break-after: avoid !important; }
+  body.pdf-desktop .shell { max-width: 1080px !important; }
   body.pdf-desktop .chart-box { height: 320px !important; }
-  body.pdf-desktop .chart-box.xtall { height: 500px !important; }
+  body.pdf-desktop .chart-box.xtall { height: 480px !important; }
   body.pdf-desktop .tier-grid { grid-template-columns: repeat(4, 1fr) !important; }
   body.pdf-desktop .kpi-row { grid-template-columns: repeat(4, 1fr) !important; }
+
+  /* WIDE TABLE (for desktop PDF — full table width) */
+  body.pdf-desktop .table-scroll { max-height: none !important; overflow: visible !important; }
+  body.pdf-desktop table { font-size: 10px !important; }
+  body.pdf-desktop thead th { font-size: 9px !important; padding: 5px 6px !important; }
+  body.pdf-desktop tbody td { padding: 5px 6px !important; }
+
   footer { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; color: var(--dim); font-size: 9.5px; flex-wrap: wrap; gap: 6px; }
 </style>
 </head>
@@ -161,7 +220,7 @@
   <div class="header">
     <div class="logo"><span>UNIFIED LAB CENTER</span></div>
     <h1>مركز الفحوصات الموحد</h1>
-    <div class="sub">تقرير مقارنة المراكز الصحية</div>
+    <div class="sub">تقرير شامل لمقارنة المراكز والفحوصات</div>
     <div class="header-bar">
       <span class="pill"><span class="dot"></span> جاهز</span>
       <span class="pill mono" id="datePill">—</span>
@@ -171,7 +230,7 @@
         <div class="export-menu" id="exportMenu">
           <div class="export-opt" data-mode="mobile">
             <span class="ic">📱</span>
-            <div><div>للجوال (واتس)</div><span class="meta">A4 عمودي · مناسب للجوال</span></div>
+            <div><div>للجوال (واتس)</div><span class="meta">A4 عمودي · بدون تقطيع</span></div>
           </div>
           <div class="export-opt" data-mode="desktop">
             <span class="ic">💻</span>
@@ -185,7 +244,7 @@
   <div id="upload-section">
     <div class="intro">
       <h2>عن التقرير</h2>
-      <p>تقرير مرجعي يقارن أداء جميع المراكز الصحية: أحجام العينات، أوقات الوصول، النتائج، وإعادات الفحص. مصمم ليُعرض على الجوال ويُرسل عبر واتس.</p>
+      <p>تقرير شامل لمركز الفحوصات الموحد: أحجام العينات، أوقات الوصول، مقارنة المراكز، تحليل الفحوصات والقياسات السريرية.</p>
       <div class="target-row">
         <div class="target" style="--c: var(--orange)"><h4>وصول العينة</h4><div class="meta">≤ 4.5 س</div></div>
         <div class="target" style="--c: var(--green)"><h4>الالتزام</h4><div class="meta">≥ 90%</div></div>
@@ -205,6 +264,7 @@
     <div class="note">
       <strong>المصطلحات:</strong> كل <strong>Sample_ID</strong> = عينة واحدة (panel).
       <strong>وصول العينة</strong> = من السحب إلى الاستقبال. <strong>الالتزام</strong> = نسبة العينات الواصلة ضمن ٤.٥ ساعة.
+      <strong>خارج المعدل</strong> = نتيجة مرتفعة أو منخفضة عن المرجع.
     </div>
 
     <!-- 1) حجم العمل -->
@@ -253,17 +313,86 @@
     <div class="section" style="--c: var(--pink)"><span class="bar"></span><h2>تصنيف المراكز</h2><span class="desc">A / B / C / D</span></div>
     <div class="card"><div class="card-head"><h3>تصنيف ذكي حسب الأداء</h3><p>حسب الالتزام بهدف ٤.٥ ساعة</p></div><div class="tier-grid" id="tierList"></div></div>
 
-    <!-- 6) النتائج -->
-    <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>مقارنة النتائج</h2><span class="desc">طبيعي vs خارج المعدل</span></div>
+    <!-- 6) FREE TESTS SECTION — جديد ١٢ مؤشر -->
+    <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>تحليل الفحوصات</h2><span class="desc">١٢ مؤشر للفحوصات</span></div>
+
+    <div class="kpi-row" id="testsKpis"></div>
+
+    <div id="criticalTestAlerts"></div>
+
+    <div class="card">
+      <div class="card-head"><h3>أكثر الفحوصات طلباً</h3><p>أعلى ١٥ فحص حسب عدد العينات</p></div>
+      <div class="chart-box xtall"><canvas id="topTestsChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>الفحوصات الأكثر خروجاً عن المعدل</h3><p>أعلى نسبة "غير طبيعي" (طلبت ٥٠+ مرة)</p></div>
+      <div class="chart-box xtall"><canvas id="testAbRateChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>الفحوصات حسب الفئة</h3><p>كيمياء، CBC، هرمونات، فيتامينات…</p></div>
+      <div class="chart-box tall"><canvas id="testCatChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>الفحوصات حسب نمط الخلل</h3><p>طبيعي · مرتفع · منخفض — أعلى ١٢ فحص بالنتائج</p></div>
+      <div class="chart-box xtall"><canvas id="testResultsChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>تفصيل النتائج لكل فحص</h3><p>طبيعي / مرتفع / منخفض — كل فحص</p></div>
+      <input type="text" class="search" id="testBdSearch" placeholder="🔍 ابحث عن فحص…" />
+      <div class="table-scroll" style="max-height:540px" id="testBreakdown"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>أكثر القياسات إجراءً</h3><p>القياسات الفردية داخل الفحوصات</p></div>
+      <div class="chart-box xtall"><canvas id="topParamsChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>أكثر القياسات خروجاً عن المعدل</h3><p>تنبيهات سريرية مهمة</p></div>
+      <div class="chart-box xtall"><canvas id="topAbParamsChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>توزيع النتائج إجمالاً</h3><p>طبيعي vs مرتفع vs منخفض على مستوى المركز</p></div>
+      <div class="chart-box"><canvas id="overallResultsChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>جدول الفحوصات <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="testCount"></span></h3><p>تفاصيل كل فحص</p></div>
+      <input type="text" class="search" id="testTableSearch" placeholder="🔍 ابحث…" />
+      <div class="table-wrap"><div class="table-scroll" style="max-height:400px">
+        <table id="testsTable">
+          <thead><tr><th>#</th><th>الفحص</th><th>الفئة</th><th>عينات</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>جدول القياسات الأكثر خروجاً</h3><p>أعلى ٣٠ قياس</p></div>
+      <div class="table-wrap"><div class="table-scroll" style="max-height:400px">
+        <table id="paramsTable">
+          <thead><tr><th>#</th><th>القياس</th><th>الفحص الأم</th><th>إجمالي</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- 7) النتائج حسب المركز -->
+    <div class="section" style="--c: var(--green)"><span class="bar"></span><h2>النتائج حسب المركز</h2><span class="desc">مقارنة المراكز</span></div>
     <div class="card"><div class="card-head"><h3>نتائج الفحوصات حسب المركز</h3><p>توزيع طبيعي / مرتفع / منخفض — أعلى ١٥</p></div><div class="chart-box xtall"><canvas id="resultsByPhcChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>نسبة خارج المعدل لكل مركز</h3><p>قد يحتاج مراجعة فئات المرضى أو دقة العينات</p></div><div class="chart-box xtall"><canvas id="abByPhcChart"></canvas></div></div>
 
-    <!-- 7) إعادات -->
-    <div class="section" style="--c: var(--green)"><span class="bar"></span><h2>إعادة الفحوصات</h2><span class="desc">حسب المركز</span></div>
+    <!-- 8) إعادات -->
+    <div class="section" style="--c: var(--blue)"><span class="bar"></span><h2>إعادة الفحوصات</h2><span class="desc">حسب المركز</span></div>
     <div class="card"><div class="card-head"><h3>أعلى المراكز في إعادة الفحوصات</h3><p>عدد حالات إعادة فحص نفس المريض</p></div><div class="chart-box xtall"><canvas id="repByPhcChart"></canvas></div></div>
 
-    <!-- 8) الجدول -->
-    <div class="section" style="--c: var(--blue)"><span class="bar"></span><h2>الجدول الشامل</h2><span class="desc">كل المراكز</span></div>
+    <!-- 9) الجدول -->
+    <div class="section" style="--c: var(--purple)"><span class="bar"></span><h2>الجدول الشامل</h2><span class="desc">كل المراكز</span></div>
     <div class="card">
       <div class="card-head"><h3>المقارنة الكاملة <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="phcCount"></span></h3><p>بحث وفلترة — قابل للتمرير الجانبي</p></div>
       <div class="tabs" id="phcTabs">
@@ -281,7 +410,7 @@
       </div></div>
     </div>
 
-    <!-- 9) الخلاصات -->
+    <!-- 10) الخلاصات -->
     <div class="section" style="--c: var(--purple-light)"><span class="bar"></span><h2>الخلاصات</h2><span class="desc">جاهزة للعرض</span></div>
     <div class="card"><div class="card-head"><h3>أبرز الملاحظات</h3><p>تحليل تلقائي للأنماط</p></div><div class="insights-grid" id="insights"></div></div>
 
@@ -306,6 +435,27 @@ const fmt1 = n => (n == null || isNaN(n)) ? '—' : Number(n).toFixed(1);
 const fmt2 = n => (n == null || isNaN(n)) ? '—' : Number(n).toFixed(2);
 const trunc = (s, n) => s && s.length > n ? s.slice(0, n) + '…' : (s || '');
 const shortName = s => (s || '').replace(' Health Center','').replace(' Primary Healthcare Center','').replace(' – Madinah Health','').replace(' - Madinah Health','').trim();
+
+function categorize(name) {
+  const n = (name || '').toUpperCase();
+  if (/HBSAG|HBS AB|HCV|HIV|RUBELLA|VARICELLA|MEASLES|BRUCELLA|HEPATITIS|HELICOBACTER PYLORI/.test(n)) return 'مصلية';
+  if (/^CBC( |$)|CBC DIFF/.test(n)) return 'CBC';
+  if (/VIT\.D|VITAMIN D|25OH/.test(n)) return 'فيتامين د';
+  if (/VITAMIN B12|B12/.test(n)) return 'فيتامين B12';
+  if (/FOLATE/.test(n)) return 'حمض الفوليك';
+  if (/FERRITIN/.test(n)) return 'فيريتين';
+  if (/TSH|FREE T3|FREE T4|^T3|^T4|THYROID|THYROGLOBULIN/.test(n)) return 'غدة درقية';
+  if (/HCG|TESTOSTERONE|PROLACTIN|FSH|LH|PROGESTERONE|PSA|PTH/.test(n)) return 'هرمونات';
+  if (/CHOLESTEROL|TRIGLYCERID|HDL|LDL|LIPID/.test(n)) return 'دهون';
+  if (/GLUCOSE|HBA1C|GLYCOSYLATED/.test(n)) return 'سكر';
+  if (/AST|ALT|ALP|GGT|BILIRUBIN|ALBUMIN|LFT|LIVER|TOTAL PROTEIN|ALKALINE PHOSPHATASE/.test(n)) return 'كبد';
+  if (/CREATININE|BUN|UREA|URIC ACID|EGFR|MICROALBUMIN/.test(n)) return 'كلى';
+  if (/SODIUM|POTASSIUM|CHLORIDE|CALCIUM|MAGNESIUM|PHOSPHATE/.test(n)) return 'أملاح';
+  if (/IRON \(FE\)|^IRON|TIBC|UIBC/.test(n)) return 'حديد';
+  if (/C\. REACTIVE|CRP|ESR/.test(n)) return 'التهاب';
+  if (/URINE|FIT|STOOL|PREGNANCY/.test(n)) return 'بول/براز';
+  return 'أخرى';
+}
 
 const fileInput = document.getElementById('fileInput');
 const dropZone = document.getElementById('dropZone');
@@ -446,6 +596,7 @@ function analyze(rows) {
     patient: findCol(first, ['Patient_ID']),
     phc: findCol(first, ['PHC_Name']),
     test: findCol(first, ['Test_Name']),
+    parameter: findCol(first, ['Parameter_Name']),
     sample: findCol(first, ['Sample_ID']),
     status: findCol(first, ['Sample_Status']),
     collD: findCol(first, ['Collection_Date']),
@@ -505,14 +656,38 @@ function analyze(rows) {
     if (info.arrival != null) p.arrival.push(info.arrival);
   });
 
+  // Test/parameter analysis
+  const testsMap = new Map(); // test name -> stats
+  const paramsMap = new Map(); // param name -> stats
+  const catsMap = new Map(); // category -> stats
+  const sampleTests = new Map(); // sid -> set of tests (for sample counting per test)
   const patientTest = new Map();
   let normalCnt = 0, highCnt = 0, lowCnt = 0;
+
   rows.forEach(row => {
     const sid = String(row[c.sample] || '').trim();
     if (!sid || !samples.has(sid)) return;
     const info = samples.get(sid);
     const test = c.test ? String(row[c.test] || '').trim() : '';
+    const param = c.parameter ? String(row[c.parameter] || '').trim() : '';
     const cl = classify(row[c.value], row[c.range]);
+
+    // Per-sample test tracking
+    if (test) {
+      if (!sampleTests.has(sid)) sampleTests.set(sid, new Set());
+      const wasNew = !sampleTests.get(sid).has(test);
+      sampleTests.get(sid).add(test);
+
+      if (!testsMap.has(test)) testsMap.set(test, { cat: categorize(test), samples: new Set(), n:0, h:0, l:0 });
+      const t = testsMap.get(test);
+      t.samples.add(sid);
+      // Category
+      const catName = t.cat;
+      if (!catsMap.has(catName)) catsMap.set(catName, { samples: new Set(), tests: new Set() });
+      catsMap.get(catName).samples.add(sid);
+      catsMap.get(catName).tests.add(test);
+    }
+
     if (cl) {
       if (cl === 'Normal') normalCnt++;
       else if (cl === 'High') highCnt++;
@@ -521,7 +696,24 @@ function analyze(rows) {
       if (cl === 'Normal') p.n++;
       else if (cl === 'High') p.h++;
       else if (cl === 'Low') p.l++;
+      if (test && testsMap.has(test)) {
+        const t = testsMap.get(test);
+        if (cl === 'Normal') t.n++;
+        else if (cl === 'High') t.h++;
+        else if (cl === 'Low') t.l++;
+      }
     }
+
+    if (param) {
+      if (!paramsMap.has(param)) paramsMap.set(param, { parents: new Set(), n:0, h:0, l:0, total:0 });
+      const pa = paramsMap.get(param);
+      pa.total++;
+      if (test) pa.parents.add(test);
+      if (cl === 'Normal') pa.n++;
+      else if (cl === 'High') pa.h++;
+      else if (cl === 'Low') pa.l++;
+    }
+
     if (test && info.pid) {
       const key = info.pid + '|' + test;
       if (!patientTest.has(key)) patientTest.set(key, new Set());
@@ -537,6 +729,7 @@ function analyze(rows) {
     phcs.forEach(phc => { if (phcMap.has(phc)) phcMap.get(phc).repeats++; });
   });
 
+  // Build PHC array
   const phcArr = [...phcMap.entries()].map(([name, v]) => {
     const arr = v.arrival;
     const total = v.n + v.h + v.l;
@@ -556,6 +749,38 @@ function analyze(rows) {
     };
   }).sort((a,b) => b.samples - a.samples);
 
+  // Tests array
+  const testsArr = [...testsMap.entries()].map(([name, v]) => {
+    const total = v.n + v.h + v.l;
+    return {
+      name, cat: v.cat,
+      samples: v.samples.size,
+      n: v.n, h: v.h, l: v.l, total,
+      abPct: total > 0 ? ((v.h + v.l) / total * 100) : null,
+      nPct: total > 0 ? (v.n / total * 100) : 0,
+      hPct: total > 0 ? (v.h / total * 100) : 0,
+      lPct: total > 0 ? (v.l / total * 100) : 0,
+    };
+  }).sort((a,b) => b.samples - a.samples);
+
+  // Params array
+  const paramsArr = [...paramsMap.entries()].map(([name, v]) => {
+    const total = v.n + v.h + v.l;
+    return {
+      name, parents: [...v.parents],
+      total: v.total,
+      n: v.n, h: v.h, l: v.l, classTotal: total,
+      abPct: total > 0 ? ((v.h + v.l) / total * 100) : null,
+      ab: v.h + v.l,
+    };
+  }).sort((a,b) => b.total - a.total);
+
+  // Cats array
+  const catsArr = [...catsMap.entries()].map(([name, v]) => ({
+    name, samples: v.samples.size, tests: v.tests.size,
+  })).sort((a,b) => b.samples - a.samples);
+
+  // Arrival stats
   const allArrival = [];
   samples.forEach(v => { if (v.arrival != null) allArrival.push(v.arrival); });
   const arrivalStats = {
@@ -594,12 +819,18 @@ function analyze(rows) {
       samples: samples.size,
       patients: new Set([...samples.values()].filter(v => v.pid).map(v => v.pid)).size,
       centers: phcMap.size,
+      tests: testsMap.size,
+      parameters: paramsMap.size,
       arrivalStats,
       periodStart: minDate ? minDate.toISOString().slice(0,10) : null,
       periodEnd: maxDate ? maxDate.toISOString().slice(0,10) : null,
       totalRepeats,
+      normal: normalCnt, high: highCnt, low: lowCnt,
+      totalCls: normalCnt + highCnt + lowCnt,
+      abRate: (normalCnt + highCnt + lowCnt) > 0 ? ((highCnt + lowCnt) / (normalCnt + highCnt + lowCnt) * 100) : 0,
     },
     phc: phcArr, eligible, tiers,
+    tests: testsArr, params: paramsArr, cats: catsArr,
     dailyDates, dailyVals,
     weekdayOrdered, dayLabels,
     arrivalByDayOrdered,
@@ -612,10 +843,15 @@ function renderAll(a) {
   const s = a.s;
   if (s.periodStart && s.periodEnd) document.getElementById('datePill').textContent = `${s.periodStart} → ${s.periodEnd}`;
   document.getElementById('footerInfo').textContent = `الفترة: ${s.periodStart || '—'} → ${s.periodEnd || '—'}`;
-  document.getElementById('footerStats').textContent = `${fmt(s.samples)} عينة · ${s.centers} مركز`;
+  document.getElementById('footerStats').textContent = `${fmt(s.samples)} عينة · ${s.centers} مركز · ${s.tests} فحص`;
   renderKpis(a);
   renderHero(a);
   renderTierList(a);
+  renderTestsKpis(a);
+  renderCriticalTestAlerts(a);
+  renderTestBreakdown(a);
+  renderTestsTable(a);
+  renderParamsTable(a);
   renderInsights(a);
   renderPhcTable(a, 'all');
   requestAnimationFrame(() => renderAllCharts(a));
@@ -678,6 +914,110 @@ function renderTierList(a) {
   }).join('');
 }
 
+function renderTestsKpis(a) {
+  const s = a.s;
+  const topTest = a.tests[0];
+  const mostAb = [...a.tests].filter(t => t.total >= 100).sort((x,y) => y.abPct - x.abPct)[0];
+  const k = [
+    { c:'var(--blue)', l:'أنواع الفحوصات', v: fmt(s.tests), sub: `${s.parameters} قياس فردي` },
+    { c:'var(--green)', l:'الأكثر طلباً', v: topTest ? fmt(topTest.samples) : '—', sub: topTest ? trunc(topTest.name, 18) : '—' },
+    { c:'var(--red)', l:'الأعلى خروجاً', v: mostAb ? fmt1(mostAb.abPct)+'%' : '—', sub: mostAb ? trunc(mostAb.name, 18) : '—' },
+    { c:'var(--orange)', l:'إجمالي خارج المعدل', v: fmt1(s.abRate)+'%', sub: `${fmt(s.high + s.low)} حالة` },
+  ];
+  document.getElementById('testsKpis').innerHTML = k.map(x => `
+    <div class="kpi" style="--c:${x.c}">
+      <div class="lbl">${x.l}</div>
+      <div class="val mono" style="color:${x.c}">${x.v}</div>
+      <div class="sub">${x.sub}</div>
+    </div>`).join('');
+}
+
+function renderCriticalTestAlerts(a) {
+  // Find most concerning tests
+  const concerns = a.tests
+    .filter(t => t.total >= 200 && t.abPct >= 30)
+    .sort((x,y) => y.abPct - x.abPct)
+    .slice(0, 4);
+  if (concerns.length === 0) {
+    document.getElementById('criticalTestAlerts').innerHTML = '';
+    return;
+  }
+  document.getElementById('criticalTestAlerts').innerHTML = `
+    <div class="alert-red">
+      <h4>🚨 فحوصات تستدعي الانتباه (نسبة خروج عالية)</h4>
+      <p>${concerns.map(t => `<strong>${t.name}</strong>: ${fmt1(t.abPct)}% خارج المعدل (${fmt(t.h + t.l)} من ${fmt(t.total)})`).join(' · ')}</p>
+    </div>`;
+}
+
+function renderTestBreakdown(a) {
+  const sorted = [...a.tests].sort((x,y) => y.samples - x.samples);
+  document.getElementById('testBreakdown').innerHTML = sorted.map(t => {
+    if (t.total === 0) {
+      return `
+        <div class="test-row" data-name="${(t.name + ' ' + t.cat).toLowerCase()}">
+          <div class="test-head">
+            <div class="test-name">${t.name}<span class="chip">${t.cat}</span></div>
+            <div class="test-count">${fmt(t.samples)} عينة</div>
+          </div>
+          <div style="color:var(--dim); font-size:10.5px">لا توجد نتائج كمية</div>
+        </div>`;
+    }
+    return `
+      <div class="test-row" data-name="${(t.name + ' ' + t.cat).toLowerCase()}">
+        <div class="test-head">
+          <div class="test-name">${t.name}<span class="chip">${t.cat}</span></div>
+          <div class="test-count">${fmt(t.samples)} عينة · ${fmt(t.total)} نتيجة</div>
+        </div>
+        <div class="test-bar">
+          ${t.nPct > 0 ? `<div class="test-seg n" style="width:${t.nPct}%">${t.nPct >= 10 ? fmt1(t.nPct)+'%' : ''}</div>` : ''}
+          ${t.hPct > 0 ? `<div class="test-seg h" style="width:${t.hPct}%">${t.hPct >= 10 ? fmt1(t.hPct)+'%' : ''}</div>` : ''}
+          ${t.lPct > 0 ? `<div class="test-seg l" style="width:${t.lPct}%">${t.lPct >= 10 ? fmt1(t.lPct)+'%' : ''}</div>` : ''}
+        </div>
+        <div class="test-meta">
+          <span><span class="dot" style="background:var(--green)"></span>${fmt(t.n)} طبيعي</span>
+          <span><span class="dot" style="background:var(--red)"></span>${fmt(t.h)} مرتفع</span>
+          <span><span class="dot" style="background:var(--orange)"></span>${fmt(t.l)} منخفض</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderTestsTable(a) {
+  document.getElementById('testCount').textContent = `${a.tests.length} فحص`;
+  document.querySelector('#testsTable tbody').innerHTML = a.tests.map((t, i) => {
+    const abCls = t.abPct == null ? 't-na' : t.abPct > 30 ? 't-bad' : t.abPct > 15 ? 't-warn' : 't-good';
+    return `
+      <tr data-name="${(t.name + ' ' + t.cat).toLowerCase()}">
+        <td class="num">${i+1}</td>
+        <td>${t.name}</td>
+        <td><span class="chip">${t.cat}</span></td>
+        <td class="num">${fmt(t.samples)}</td>
+        <td class="num t-n">${fmt(t.n)}</td>
+        <td class="num t-h">${fmt(t.h)}</td>
+        <td class="num t-l">${fmt(t.l)}</td>
+        <td class="num ${abCls}">${t.abPct == null ? '—' : fmt1(t.abPct)+'%'}</td>
+      </tr>`;
+  }).join('');
+}
+
+function renderParamsTable(a) {
+  const sorted = [...a.params].filter(p => (p.h + p.l) > 0).sort((x,y) => (y.h + y.l) - (x.h + x.l)).slice(0, 30);
+  document.querySelector('#paramsTable tbody').innerHTML = sorted.map((p, i) => {
+    const abCls = p.abPct == null ? 't-na' : p.abPct > 30 ? 't-bad' : p.abPct > 15 ? 't-warn' : 't-good';
+    return `
+      <tr>
+        <td class="num">${i+1}</td>
+        <td>${p.name.trim()}</td>
+        <td style="color:var(--muted); font-size:10px">${trunc(p.parents[0] || '—', 14)}</td>
+        <td class="num">${fmt(p.classTotal)}</td>
+        <td class="num t-n">${fmt(p.n)}</td>
+        <td class="num t-h">${fmt(p.h)}</td>
+        <td class="num t-l">${fmt(p.l)}</td>
+        <td class="num ${abCls}">${p.abPct == null ? '—' : fmt1(p.abPct)+'%'}</td>
+      </tr>`;
+  }).join('');
+}
+
 function renderInsights(a) {
   const ar = a.s.arrivalStats;
   const ins = [];
@@ -688,14 +1028,22 @@ function renderInsights(a) {
   if (worst) ins.push({ c:'var(--red)', ic:'🚨', title:'الأقل التزاماً', text:`${shortName(worst.name)} — ${fmt1(worst.within)}% فقط (متوسط ${fmt2(worst.avg)}س).` });
   const best = [...a.eligible].sort((x,y) => y.within - x.within)[0];
   if (best) ins.push({ c:'var(--green)', ic:'⭐', title:'الأعلى التزاماً', text:`${shortName(best.name)} — ${fmt1(best.within)}% (متوسط ${fmt2(best.avg)}س).` });
+
+  // Test-related insights
+  const topTest = a.tests[0];
+  if (topTest) ins.push({ c:'var(--blue)', ic:'🔬', title:'الفحص الأكثر طلباً', text:`${topTest.name} — ${fmt(topTest.samples)} عينة.` });
+  const topAbTest = [...a.tests].filter(t => t.total >= 100).sort((x,y) => y.abPct - x.abPct)[0];
+  if (topAbTest) ins.push({ c:'var(--red)', ic:'📊', title:'أعلى فحص في خارج المعدل', text:`${topAbTest.name} — ${fmt1(topAbTest.abPct)}% خارج المعدل.` });
+
   const mostOver = [...a.eligible].sort((x,y) => y.overTarget - x.overTarget)[0];
   if (mostOver) ins.push({ c:'var(--orange)', ic:'⏳', title:'الأكثر تأخراً', text:`${shortName(mostOver.name)} — ${fmt(mostOver.overTarget)} عينة تجاوزت ٤.٥ ساعة.` });
-  const highAb = [...a.eligible].filter(p => p.total >= 100).sort((x,y) => y.abPct - x.abPct)[0];
-  if (highAb) ins.push({ c:'var(--pink)', ic:'📊', title:'الأعلى في خارج المعدل', text:`${shortName(highAb.name)} — ${fmt1(highAb.abPct)}% من النتائج خارج المعدل.` });
+
   const mostRep = [...a.phc].sort((x,y) => y.repeats - x.repeats)[0];
   if (mostRep && mostRep.repeats > 0) ins.push({ c:'var(--yellow)', ic:'🔁', title:'الأكثر إعادة', text:`${shortName(mostRep.name)} — ${fmt(mostRep.repeats)} حالة إعادة سحب.` });
+
   const busyIdx = a.weekdayOrdered.indexOf(Math.max(...a.weekdayOrdered));
   ins.push({ c:'var(--purple)', ic:'📅', title:'أعلى أيام النشاط', text:`${a.dayLabels[busyIdx]} — ${fmt(a.weekdayOrdered[busyIdx])} عينة.` });
+
   document.getElementById('insights').innerHTML = ins.map(i => `
     <div class="insight" style="--c:${i.c}">
       <div class="ic">${i.ic}</div>
@@ -851,6 +1199,69 @@ function renderAllCharts(a) {
     }
   });
 
+  // ========== TESTS CHARTS ==========
+  const topTests = a.tests.slice(0, 15);
+  STATE.charts.topTests = new Chart(document.getElementById('topTestsChart'), {
+    type: 'bar',
+    data: { labels: topTests.map(t => trunc(t.name, 22)), datasets: [{ data: topTests.map(t => t.samples), backgroundColor: ctx => gradH(ctx, 'rgba(126,224,184,0.95)', 'rgba(126,224,184,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' عينة')
+  });
+
+  const abTests = [...a.tests].filter(t => t.total >= 50 && t.abPct != null).sort((x,y) => y.abPct - x.abPct).slice(0, 15);
+  STATE.charts.testAbRate = new Chart(document.getElementById('testAbRateChart'), {
+    type: 'bar',
+    data: { labels: abTests.map(t => trunc(t.name, 22)), datasets: [{ data: abTests.map(t => t.abPct), backgroundColor: abTests.map(t => t.abPct > 50 ? C.red : t.abPct > 25 ? C.orange : C.blue), borderRadius: 4, maxBarThickness: 14 }] },
+    options: { ...hBarOpts('%'), scales: { ...hBarOpts().scales, x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+  });
+
+  STATE.charts.testCat = new Chart(document.getElementById('testCatChart'), {
+    type: 'bar',
+    data: { labels: a.cats.map(c => c.name), datasets: [{ data: a.cats.map(c => c.samples), backgroundColor: ctx => gradH(ctx, 'rgba(139,124,229,0.95)', 'rgba(139,124,229,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' عينة')
+  });
+
+  // Stacked test results
+  const stackedTests = [...a.tests].filter(t => t.total > 0).sort((x,y) => y.total - x.total).slice(0, 12);
+  STATE.charts.testResults = new Chart(document.getElementById('testResultsChart'), {
+    type: 'bar',
+    data: {
+      labels: stackedTests.map(t => trunc(t.name, 22)),
+      datasets: [
+        { label:'طبيعي', data: stackedTests.map(t => t.n), backgroundColor: C.green, borderRadius: 2 },
+        { label:'مرتفع', data: stackedTests.map(t => t.h), backgroundColor: C.red, borderRadius: 2 },
+        { label:'منخفض', data: stackedTests.map(t => t.l), backgroundColor: C.orange, borderRadius: 2 },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 9, boxHeight: 9, padding: 6 } }, tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7 } },
+      scales: { x: { stacked: true, grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} }, y: { stacked: true, grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} } }
+    }
+  });
+
+  // Top params
+  const topParams = a.params.slice(0, 15);
+  STATE.charts.topParams = new Chart(document.getElementById('topParamsChart'), {
+    type: 'bar',
+    data: { labels: topParams.map(p => trunc(p.name.trim(), 18)), datasets: [{ data: topParams.map(p => p.total), backgroundColor: ctx => gradH(ctx, 'rgba(110,196,247,0.95)', 'rgba(110,196,247,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' قياس')
+  });
+
+  // Top abnormal params
+  const topAbParams = [...a.params].filter(p => p.ab > 0).sort((x,y) => y.ab - x.ab).slice(0, 15);
+  STATE.charts.topAbParams = new Chart(document.getElementById('topAbParamsChart'), {
+    type: 'bar',
+    data: { labels: topAbParams.map(p => trunc(p.name.trim(), 18)), datasets: [{ data: topAbParams.map(p => p.ab), backgroundColor: ctx => gradH(ctx, 'rgba(255,123,138,0.95)', 'rgba(255,123,138,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' حالة')
+  });
+
+  // Overall results
+  STATE.charts.overallResults = new Chart(document.getElementById('overallResultsChart'), {
+    type: 'doughnut',
+    data: { labels: ['طبيعي','مرتفع','منخفض'], datasets: [{ data: [a.s.normal, a.s.high, a.s.low], backgroundColor: [C.green, C.red, C.orange], borderColor:'#151b2f', borderWidth: 2 }] },
+    options: { cutout:'60%', plugins: { legend: { position:'bottom', labels: { font: { size: 10.5 }, color: C.muted, boxWidth: 10, boxHeight: 10, padding: 8 } }, tooltip: { callbacks: { label: c => `${c.label}: ${fmt(c.parsed)}` } } } }
+  });
+
   const topByResults = [...a.phc].filter(p => p.total > 0).sort((x,y) => y.total - x.total).slice(0, 15);
   STATE.charts.resultsByPhc = new Chart(document.getElementById('resultsByPhcChart'), {
     type: 'bar',
@@ -925,15 +1336,19 @@ function renderPhcTable(a, filter) {
 }
 
 function attachSearches() {
-  const inp = document.getElementById('phcSearch');
-  if (inp) {
+  function bind(id, selector) {
+    const inp = document.getElementById(id);
+    if (!inp) return;
     inp.addEventListener('input', e => {
       const q = e.target.value.toLowerCase();
-      document.querySelectorAll('#phcTable tbody tr').forEach(tr => {
-        tr.style.display = tr.dataset.name && tr.dataset.name.includes(q) ? '' : 'none';
+      document.querySelectorAll(selector).forEach(el => {
+        el.style.display = el.dataset.name && el.dataset.name.includes(q) ? '' : 'none';
       });
     });
   }
+  bind('phcSearch', '#phcTable tbody tr');
+  bind('testBdSearch', '#testBreakdown .test-row');
+  bind('testTableSearch', '#testsTable tbody tr');
 }
 function attachTabs() {
   document.querySelectorAll('#phcTabs .tab').forEach(t => {
@@ -974,18 +1389,19 @@ document.querySelectorAll('.export-opt').forEach(opt => {
   });
 });
 
+// CRITICAL: New PDF export — captures each card/section separately to avoid cutting
 async function exportPdf(mode = 'mobile') {
   const orig = pdfBtn.innerHTML;
   pdfBtn.disabled = true;
   pdfBtn.innerHTML = '<span class="spinner"></span> جاري…';
   const isDesktop = mode === 'desktop';
 
-  if (isDesktop) {
-    document.body.classList.add('pdf-desktop');
-    await new Promise(r => setTimeout(r, 200));
-    Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
-    await new Promise(r => setTimeout(r, 600));
-  }
+  document.body.classList.add('pdf-mode');
+  if (isDesktop) document.body.classList.add('pdf-desktop');
+
+  await new Promise(r => setTimeout(r, 300));
+  Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
+  await new Promise(r => setTimeout(r, 700));
 
   try {
     const { jsPDF } = window.jspdf;
@@ -995,6 +1411,7 @@ async function exportPdf(mode = 'mobile') {
     const M = isDesktop ? 8 : 6;
     const s = STATE.an.s;
 
+    // Cover
     pdf.setFillColor(10, 14, 26);
     pdf.rect(0, 0, W, H, 'F');
     pdf.setTextColor(139, 124, 229);
@@ -1002,55 +1419,147 @@ async function exportPdf(mode = 'mobile') {
     pdf.text('UNIFIED LAB CENTER', M, 18);
     pdf.setTextColor(231, 236, 247);
     pdf.setFontSize(isDesktop ? 24 : 18);
-    pdf.text('Centers Comparison Report', M, isDesktop ? 40 : 34);
+    pdf.text('Centers & Tests Report', M, isDesktop ? 40 : 34);
     pdf.setFontSize(isDesktop ? 13 : 11);
     pdf.setTextColor(136, 147, 179);
     pdf.text(`Period: ${s.periodStart} to ${s.periodEnd}`, M, isDesktop ? 54 : 44);
-    pdf.text(`${s.samples.toLocaleString()} samples | ${s.centers} centers`, M, isDesktop ? 64 : 52);
+    pdf.text(`${s.samples.toLocaleString()} samples | ${s.centers} centers | ${s.tests} tests`, M, isDesktop ? 64 : 52);
     pdf.text(`SLA compliance: ${s.arrivalStats.within.toFixed(1)}%`, M, isDesktop ? 74 : 60);
-    pdf.setFontSize(isDesktop ? 11 : 9);
-    pdf.text(`Format: ${isDesktop ? 'Desktop (A4 landscape)' : 'Mobile (A4 portrait)'}`, M, isDesktop ? 84 : 68);
 
+    // Get all block-level elements to render
+    // Strategy: render each card/hero/intro/section as one image, don't split it
     const app = document.getElementById('app');
+    const blocks = Array.from(app.children);
+
+    // Expand all tables for full visibility
     const origs = [];
     app.querySelectorAll('.table-scroll').forEach(t => {
       origs.push({ el:t, mH:t.style.maxHeight, oY:t.style.overflowY });
-      t.style.maxHeight = 'none'; t.style.overflowY = 'visible';
+      t.style.maxHeight = 'none';
+      t.style.overflowY = 'visible';
     });
 
-    try {
-      const canvas = await html2canvas(app, { backgroundColor: '#0a0e1a', scale: 1.5, useCORS: true, windowWidth: app.scrollWidth });
-      const iW = W - 2*M;
-      const pxMm = canvas.width / iW;
-      const pH = (H - 16) * pxMm;
-      let yOff = 0;
-      while (yOff < canvas.height) {
-        const pHc = Math.min(pH, canvas.height - yOff);
-        const pc = document.createElement('canvas');
-        pc.width = canvas.width; pc.height = pHc;
-        const ctx = pc.getContext('2d');
-        ctx.fillStyle = '#0a0e1a'; ctx.fillRect(0, 0, pc.width, pc.height);
-        ctx.drawImage(canvas, 0, -yOff);
-        pdf.addPage();
-        pdf.setFillColor(10, 14, 26); pdf.rect(0, 0, W, H, 'F');
-        pdf.addImage(pc.toDataURL('image/jpeg', 0.85), 'JPEG', M, 8, iW, pHc / pxMm);
-        yOff += pHc;
+    const printableW = W - 2*M;
+    const printableH = H - 16;
+    let currentY = 8;
+
+    // Add header for first content page
+    pdf.addPage();
+    pdf.setFillColor(10, 14, 26);
+    pdf.rect(0, 0, W, H, 'F');
+
+    let pendingSection = null;
+
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      if (!block || block.offsetHeight === 0) continue;
+
+      // Identify section headers — keep them with the next block
+      if (block.classList.contains('section')) {
+        pendingSection = block;
+        continue;
       }
-    } finally {
-      origs.forEach(o => { o.el.style.maxHeight = o.mH; o.el.style.overflowY = o.oY; });
+
+      try {
+        // If we have pending section, capture them as a group
+        let elemsToCapture = pendingSection ? [pendingSection, block] : [block];
+
+        // Capture each elem and try to combine
+        const canvases = [];
+        for (const e of elemsToCapture) {
+          const c = await html2canvas(e, {
+            backgroundColor: '#0a0e1a',
+            scale: isDesktop ? 1.5 : 2,
+            useCORS: true,
+            windowWidth: e.scrollWidth,
+            logging: false,
+          });
+          canvases.push(c);
+        }
+
+        // Combine canvases vertically
+        const combinedW = Math.max(...canvases.map(c => c.width));
+        const combinedH = canvases.reduce((a, c) => a + c.height, 0);
+        const combined = document.createElement('canvas');
+        combined.width = combinedW;
+        combined.height = combinedH;
+        const ctx = combined.getContext('2d');
+        ctx.fillStyle = '#0a0e1a';
+        ctx.fillRect(0, 0, combinedW, combinedH);
+        let yOff = 0;
+        for (const c of canvases) {
+          ctx.drawImage(c, 0, yOff);
+          yOff += c.height;
+        }
+
+        pendingSection = null;
+
+        // Compute fit
+        const pxMm = combined.width / printableW;
+        const blockMm = combined.height / pxMm;
+
+        if (blockMm <= printableH) {
+          // Block fits on one page
+          if (currentY + blockMm > printableH + 8) {
+            // Move to new page
+            pdf.addPage();
+            pdf.setFillColor(10, 14, 26);
+            pdf.rect(0, 0, W, H, 'F');
+            currentY = 8;
+          }
+          pdf.addImage(combined.toDataURL('image/jpeg', 0.85), 'JPEG', M, currentY, printableW, blockMm);
+          currentY += blockMm + 3;
+        } else {
+          // Block too big — slice it
+          // Force a new page first
+          if (currentY > 10) {
+            pdf.addPage();
+            pdf.setFillColor(10, 14, 26);
+            pdf.rect(0, 0, W, H, 'F');
+            currentY = 8;
+          }
+          const pH = (printableH) * pxMm;
+          let pos = 0;
+          while (pos < combined.height) {
+            const sliceH = Math.min(pH, combined.height - pos);
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = combined.width;
+            sliceCanvas.height = sliceH;
+            const sliceCtx = sliceCanvas.getContext('2d');
+            sliceCtx.fillStyle = '#0a0e1a';
+            sliceCtx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+            sliceCtx.drawImage(combined, 0, -pos);
+            const sliceMm = sliceH / pxMm;
+            pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', M, currentY, printableW, sliceMm);
+            pos += sliceH;
+            if (pos < combined.height) {
+              pdf.addPage();
+              pdf.setFillColor(10, 14, 26);
+              pdf.rect(0, 0, W, H, 'F');
+              currentY = 8;
+            } else {
+              currentY = sliceMm + 8 + 3;
+            }
+          }
+        }
+      } catch(err) {
+        console.error('Error capturing block:', err, block);
+      }
     }
 
-    const fname = `Lab_Centers_${isDesktop ? 'Desktop' : 'Mobile'}_${s.periodStart}.pdf`;
+    // Restore tables
+    origs.forEach(o => { o.el.style.maxHeight = o.mH; o.el.style.overflowY = o.oY; });
+
+    const fname = `Lab_Report_${isDesktop ? 'Desktop' : 'Mobile'}_${s.periodStart}.pdf`;
     pdf.save(fname);
   } catch(err) {
     console.error(err);
     alert('فشل تصدير PDF: ' + err.message);
   } finally {
-    if (isDesktop) {
-      document.body.classList.remove('pdf-desktop');
-      await new Promise(r => setTimeout(r, 200));
-      Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
-    }
+    document.body.classList.remove('pdf-mode');
+    document.body.classList.remove('pdf-desktop');
+    await new Promise(r => setTimeout(r, 200));
+    Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
     pdfBtn.disabled = false;
     pdfBtn.innerHTML = orig;
   }
