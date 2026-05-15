@@ -272,8 +272,8 @@
     <div class="card"><div class="card-head"><h3>أعلى المراكز بعدد المرضى</h3><p>أكثر المراكز خدمة للمرضى</p></div><div class="chart-box xtall"><canvas id="topPatientsChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>متوسط العينات لكل مريض</h3><p>هل المريض يأتي بعينة واحدة أم عدة؟</p></div><div class="chart-box xtall"><canvas id="samplesPerPatientChart"></canvas></div></div>
 
-    <!-- 3) وصول العينات -->
-    <div class="section" style="--c: var(--orange)"><span class="bar"></span><h2>وصول العينات</h2><span class="desc">الالتزام بـ ٤.٥ ساعة</span></div>
+    <!-- 3) نقل العينات -->
+    <div class="section" style="--c: var(--orange)"><span class="bar"></span><h2>نقل العينات</h2><span class="desc">الالتزام بـ ٤.٥ ساعة</span></div>
     <div class="hero" id="heroBox"></div>
     <div class="card"><div class="card-head"><h3>مقارنة المراكز — متوسط الوصول والالتزام</h3><p>متوسط الزمن مع نسبة الالتزام · أعلى ١٥ مركز</p></div><div class="chart-box xtall"><canvas id="arrivalComboChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أقل المراكز التزاماً</h3><p>في وصول العينات خلال ٤.٥ ساعة من السحب — تحتاج تدخل</p></div><div class="chart-box xtall"><canvas id="worstComplianceChart"></canvas></div></div>
@@ -281,6 +281,42 @@
     <div class="card"><div class="card-head"><h3>أعداد العينات المتأخرة</h3><p>تجاوزت ٤.٥ ساعة — أعلى ١٥ مركز</p></div><div class="chart-box xtall"><canvas id="overTargetChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعلى مدة وصول مسجلة</h3><p>أسوأ حالة في كل مركز</p></div><div class="chart-box xtall"><canvas id="worstCaseChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>توزيع المراكز حسب الالتزام</h3><p>كم مركز عند كل مستوى</p></div><div class="chart-box"><canvas id="phcComplianceChart"></canvas></div></div>
+
+    <!-- 3.5) العينات المفقودة بالمراكز -->
+    <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>العينات المفقودة بالمراكز</h2><span class="desc">تم تجميعها بالنظام دون إرسالها للمختبر</span></div>
+
+    <div class="hero" id="lostHero"></div>
+
+    <div class="kpi-row" id="lostKpis"></div>
+
+    <div id="lostAlert"></div>
+
+    <div class="card">
+      <div class="card-head"><h3>أعلى المراكز في العينات المفقودة (عدد)</h3><p>أعلى ١٥ مركز في عدد العينات التي لم تُرسل للمختبر</p></div>
+      <div class="chart-box xtall"><canvas id="lostByCountChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>أعلى المراكز في نسبة العينات المفقودة</h3><p>نسبة العينات غير المُرسلة من إجمالي عينات كل مركز</p>
+      </div>
+      <div class="chart-box xtall"><canvas id="lostByPctChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>توزيع العينات المفقودة حسب اليوم</h3><p>متى تم تجميع هذه العينات</p></div>
+      <div class="chart-box"><canvas id="lostByDayChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>جدول العينات المفقودة لكل مركز <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="lostCount"></span></h3><p>التفاصيل الكاملة</p></div>
+      <input type="text" class="search" id="lostSearch" placeholder="🔍 ابحث عن مركز…" />
+      <div class="table-wrap"><div class="table-scroll">
+        <table id="lostTable">
+          <thead><tr><th>#</th><th>المركز</th><th>إجمالي العينات</th><th>المفقودة</th><th>نسبة الفقد</th><th>أيام الذروة</th><th>أقدم عينة</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div></div>
+    </div>
 
     <!-- 4) أيام الأسبوع -->
     <div class="section" style="--c: var(--yellow)"><span class="bar"></span><h2>أيام الأسبوع</h2><span class="desc">السبت إلى الجمعة</span></div>
@@ -571,11 +607,35 @@ function analyze(rows) {
   if (!c.sample) throw new Error('Sample_ID مفقود');
 
   const samples = new Map();
+  const lostMap = new Map(); // PHC -> { count, days: Map<dateStr, count>, oldest: Date }
+  const lostByDay = new Map(); // dateStr -> count
+  let lostTotal = 0;
   rows.forEach(row => {
     const sid = String(row[c.sample] || '').trim();
     if (!sid) return;
     const status = c.status ? String(row[c.status] || '').trim() : '';
-    if (status === 'Collected') return;
+
+    // Track lost samples (Collected status only - never sent to lab)
+    if (status === 'Collected') {
+      // count once per sample
+      if (!samples.has('_lost_' + sid)) {
+        samples.set('_lost_' + sid, true);
+        const phc = c.phc ? (String(row[c.phc] || '').trim() || 'غير محدد') : 'غير محدد';
+        const collDT = pDT(row[c.collD], row[c.collT]);
+        if (!lostMap.has(phc)) lostMap.set(phc, { count: 0, days: new Map(), oldest: null });
+        const L = lostMap.get(phc);
+        L.count++;
+        lostTotal++;
+        if (collDT) {
+          const dStr = collDT.toISOString().slice(0,10);
+          L.days.set(dStr, (L.days.get(dStr) || 0) + 1);
+          lostByDay.set(dStr, (lostByDay.get(dStr) || 0) + 1);
+          if (!L.oldest || collDT < L.oldest) L.oldest = collDT;
+        }
+      }
+      return; // skip rest of processing
+    }
+
     if (samples.has(sid)) return;
     const phc = c.phc ? (String(row[c.phc] || '').trim() || 'غير محدد') : 'غير محدد';
     const orderDT = pDT(row[c.orderD], row[c.orderT]);
@@ -587,6 +647,9 @@ function analyze(rows) {
     const pid = c.patient ? String(row[c.patient] || '').trim() : null;
     samples.set(sid, { phc, pid, orderDT, collDT, recvDT, arrival });
   });
+
+  // Remove tracking keys
+  [...samples.keys()].forEach(k => { if (typeof k === 'string' && k.startsWith('_lost_')) samples.delete(k); });
 
   const phcMap = new Map();
   const dailyVol = new Map();
@@ -693,8 +756,12 @@ function analyze(rows) {
   const phcArr = [...phcMap.entries()].map(([name, v]) => {
     const arr = v.arrival;
     const total = v.n + v.h + v.l;
+    const lostInfo = lostMap.get(name) || { count: 0, days: new Map(), oldest: null };
+    const peakDay = lostInfo.days.size ? [...lostInfo.days.entries()].sort((a,b) => b[1] - a[1])[0] : null;
+    const sampleCount = v.samples.size;
+    const totalIncLost = sampleCount + lostInfo.count;
     return {
-      name, samples: v.samples.size, patients: v.patients.size,
+      name, samples: sampleCount, patients: v.patients.size,
       arrivalCount: arr.length,
       avg: arr.length ? avg(arr) : null,
       median: arr.length ? median(arr) : null,
@@ -706,6 +773,11 @@ function analyze(rows) {
       n: v.n, h: v.h, l: v.l, total,
       abPct: total > 0 ? ((v.h + v.l) / total * 100) : null,
       repeats: v.repeats,
+      lost: lostInfo.count,
+      lostPct: totalIncLost > 0 ? (lostInfo.count / totalIncLost * 100) : 0,
+      lostPeakDay: peakDay ? { day: peakDay[0], count: peakDay[1] } : null,
+      lostOldest: lostInfo.oldest,
+      totalIncLost,
     };
   }).sort((a,b) => b.samples - a.samples);
 
@@ -788,12 +860,14 @@ function analyze(rows) {
       normal: normalCnt, high: highCnt, low: lowCnt,
       totalCls: normalCnt + highCnt + lowCnt,
       abRate: (normalCnt + highCnt + lowCnt) > 0 ? ((highCnt + lowCnt) / (normalCnt + highCnt + lowCnt) * 100) : 0,
+      lostTotal,
     },
     phc: phcArr, eligible, tiers,
     tests: testsArr, params: paramsArr, cats: catsArr,
     dailyDates, dailyVals,
     weekdayOrdered, dayLabels,
     arrivalByDayOrdered,
+    lostByDay: [...lostByDay.entries()].sort((a,b) => a[0].localeCompare(b[0])),
   };
 }
 
@@ -806,6 +880,7 @@ function renderAll(a) {
   document.getElementById('footerStats').textContent = `${fmt(s.samples)} عينة · ${s.centers} مركز · ${s.tests} فحص`;
   renderKpis(a);
   renderHero(a);
+  renderLostSection(a);
   renderTierList(a);
   renderTestsKpis(a);
   renderCriticalTestAlerts(a);
@@ -851,6 +926,85 @@ function renderHero(a) {
       <span>متوسط <strong>${fmt2(ar.avg)}س</strong></span>
       <span>وسيط <strong>${fmt2(ar.median)}س</strong></span>
     </div>`;
+}
+
+function renderLostSection(a) {
+  const phcs = a.phc;
+  const totalSamplesInclLost = phcs.reduce((s, p) => s + p.totalIncLost, 0);
+  const overallLostPct = totalSamplesInclLost > 0 ? (a.s.lostTotal / totalSamplesInclLost * 100) : 0;
+  const affectedCenters = phcs.filter(p => p.lost > 0).length;
+  const worstCenter = [...phcs].filter(p => p.lost > 0).sort((x,y) => y.lostPct - x.lostPct)[0];
+
+  // Hero
+  const heroEl = document.getElementById('lostHero');
+  if (heroEl) {
+    const cl = overallLostPct >= 15 ? 'var(--red)' : overallLostPct >= 5 ? 'var(--orange)' : 'var(--green)';
+    heroEl.style.setProperty('--c', cl);
+    heroEl.innerHTML = `
+      <h3>نسبة العينات المفقودة من إجمالي العمل</h3>
+      <div class="big-num" style="color:${cl}">${fmt1(overallLostPct)}%</div>
+      <div class="hero-prog"><div style="width:${Math.min(overallLostPct, 100)}%; background:${cl}"></div></div>
+      <div class="hero-sub">
+        <span>إجمالي مفقودة <strong>${fmt(a.s.lostTotal)}</strong></span>
+        <span>مراكز متأثرة <strong>${fmt(affectedCenters)}</strong></span>
+        <span>أعلى مركز <strong>${worstCenter ? trunc(shortName(worstCenter.name), 14) : '—'}</strong></span>
+        <span>أعلى نسبة <strong>${worstCenter ? fmt1(worstCenter.lostPct)+'%' : '—'}</strong></span>
+      </div>`;
+  }
+
+  // KPIs
+  const kpisEl = document.getElementById('lostKpis');
+  if (kpisEl) {
+    const k = [
+      { c:'var(--red)', l:'العينات المفقودة', v: fmt(a.s.lostTotal), sub: 'لم تصل المختبر' },
+      { c:'var(--orange)', l:'المراكز المتأثرة', v: fmt(affectedCenters), sub: `من ${a.s.centers}` },
+      { c:'var(--pink)', l:'متوسط الفقد', v: fmt1(overallLostPct)+'%', sub: 'من إجمالي العينات' },
+      { c:'var(--yellow)', l:'أعلى نسبة فقد', v: worstCenter ? fmt1(worstCenter.lostPct)+'%' : '—', sub: worstCenter ? trunc(shortName(worstCenter.name), 14) : '—' },
+    ];
+    kpisEl.innerHTML = k.map(x => `
+      <div class="kpi" style="--c:${x.c}">
+        <div class="lbl">${x.l}</div>
+        <div class="val mono" style="color:${x.c}">${x.v}</div>
+        <div class="sub">${x.sub}</div>
+      </div>`).join('');
+  }
+
+  // Critical alert
+  const alertEl = document.getElementById('lostAlert');
+  if (alertEl) {
+    const critical = [...phcs].filter(p => p.lost >= 20 && p.lostPct >= 30).sort((x,y) => y.lostPct - x.lostPct).slice(0, 5);
+    if (critical.length > 0) {
+      alertEl.innerHTML = `
+        <div class="alert-red">
+          <h4>🚨 مراكز تستدعي تدخلاً عاجلاً</h4>
+          <p>${critical.map(p => `<strong>${shortName(p.name)}</strong>: ${fmt(p.lost)} عينة مفقودة (${fmt1(p.lostPct)}%)`).join(' · ')}</p>
+        </div>`;
+    } else {
+      alertEl.innerHTML = '';
+    }
+  }
+
+  // Table
+  const tblEl = document.querySelector('#lostTable tbody');
+  if (tblEl) {
+    const sorted = [...phcs].filter(p => p.lost > 0).sort((x,y) => y.lost - x.lost);
+    document.getElementById('lostCount').textContent = `${sorted.length} مركز`;
+    tblEl.innerHTML = sorted.map((p, i) => {
+      const pctCls = p.lostPct >= 30 ? 't-bad' : p.lostPct >= 15 ? 't-warn' : 't-good';
+      const peak = p.lostPeakDay ? `${p.lostPeakDay.day.slice(5)} (${p.lostPeakDay.count})` : '—';
+      const oldest = p.lostOldest ? p.lostOldest.toISOString().slice(5,10) : '—';
+      return `
+        <tr data-name="${p.name.toLowerCase()}">
+          <td class="num">${i+1}</td>
+          <td>${shortName(p.name)}</td>
+          <td class="num">${fmt(p.totalIncLost)}</td>
+          <td class="num t-bad">${fmt(p.lost)}</td>
+          <td class="num ${pctCls}">${fmt1(p.lostPct)}%</td>
+          <td class="num">${peak}</td>
+          <td class="num">${oldest}</td>
+        </tr>`;
+    }).join('');
+  }
 }
 
 function renderTierList(a) {
@@ -980,6 +1134,13 @@ function renderInsights(a) {
 
   const mostRep = [...a.phc].sort((x,y) => y.repeats - x.repeats)[0];
   if (mostRep && mostRep.repeats > 0) ins.push({ c:'var(--yellow)', ic:'🔁', title:'الأكثر إعادة', text:`${shortName(mostRep.name)} — ${fmt(mostRep.repeats)} حالة إعادة سحب.` });
+
+  // Lost samples insights
+  if (a.s.lostTotal > 0) {
+    ins.push({ c:'var(--red)', ic:'⚠', title:'العينات المفقودة', text:`${fmt(a.s.lostTotal)} عينة تم تجميعها بالنظام دون إرسالها للمختبر.` });
+    const worstLost = [...a.phc].filter(p => p.lost > 0).sort((x,y) => y.lostPct - x.lostPct)[0];
+    if (worstLost) ins.push({ c:'var(--orange)', ic:'📦', title:'الأعلى في نسبة الفقد', text:`${shortName(worstLost.name)} — ${fmt1(worstLost.lostPct)}% من عيناته مفقودة (${fmt(worstLost.lost)} عينة).` });
+  }
 
   const busyIdx = a.weekdayOrdered.indexOf(Math.max(...a.weekdayOrdered));
   ins.push({ c:'var(--purple)', ic:'📅', title:'أعلى أيام النشاط', text:`${a.dayLabels[busyIdx]} — ${fmt(a.weekdayOrdered[busyIdx])} عينة.` });
@@ -1132,6 +1293,48 @@ function renderAllCharts(a) {
     }
   });
 
+  // ========== LOST SAMPLES CHARTS ==========
+  const lostPhcs = [...a.phc].filter(p => p.lost > 0);
+  // by count
+  const lostByCount = [...lostPhcs].sort((x,y) => y.lost - x.lost).slice(0, 15);
+  if (document.getElementById('lostByCountChart')) {
+    STATE.charts.lostByCount = new Chart(document.getElementById('lostByCountChart'), {
+      type: 'bar',
+      data: { labels: lostByCount.map(p => trunc(shortName(p.name), 22)),
+        datasets: [{ data: lostByCount.map(p => p.lost),
+          backgroundColor: ctx => gradH(ctx, 'rgba(255,123,138,0.95)', 'rgba(255,123,138,0.3)'),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: hBarOpts(' عينة')
+    });
+  }
+  // by pct
+  const lostByPct = [...lostPhcs].filter(p => p.totalIncLost >= 50).sort((x,y) => y.lostPct - x.lostPct).slice(0, 15);
+  if (document.getElementById('lostByPctChart')) {
+    STATE.charts.lostByPct = new Chart(document.getElementById('lostByPctChart'), {
+      type: 'bar',
+      data: { labels: lostByPct.map(p => trunc(shortName(p.name), 22)),
+        datasets: [{ data: lostByPct.map(p => p.lostPct),
+          backgroundColor: lostByPct.map(p => p.lostPct >= 30 ? C.red : p.lostPct >= 15 ? C.orange : C.yellow),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+  // by day
+  if (document.getElementById('lostByDayChart') && a.lostByDay) {
+    const dayLabels = a.lostByDay.map(d => d[0].slice(5));
+    const dayVals = a.lostByDay.map(d => d[1]);
+    STATE.charts.lostByDay = new Chart(document.getElementById('lostByDayChart'), {
+      type: 'bar',
+      data: { labels: dayLabels,
+        datasets: [{ data: dayVals,
+          backgroundColor: ctx => gradV(ctx, 'rgba(255,123,138,0.9)', 'rgba(255,123,138,0.2)'),
+          borderRadius: 6, maxBarThickness: 42 }] },
+      options: vBarOpts(' عينة')
+    });
+  }
+
   // ========== TESTS CHARTS ==========
   const topTests = a.tests.slice(0, 15);
   STATE.charts.topTests = new Chart(document.getElementById('topTestsChart'), {
@@ -1257,6 +1460,7 @@ function attachSearches() {
     });
   }
   bind('phcSearch', '#phcTable tbody tr');
+  bind('lostSearch', '#lostTable tbody tr');
   bind('testBdSearch', '#testBreakdown .test-row');
   bind('testTableSearch', '#testsTable tbody tr');
 }
