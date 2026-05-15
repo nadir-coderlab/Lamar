@@ -1,645 +1,1068 @@
-```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رحلة في عالم الخلايا - لمار الرشيدي</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        body {
-            font-family: 'Tajawal', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            background-color: #f8fafc;
-            color: #1e293b;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        .slide-container {
-            scroll-snap-type: y mandatory;
-            overflow-y: scroll;
-            height: 100vh;
-            scroll-behavior: smooth;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .slide-container::-webkit-scrollbar { display: none; }
-
-        .slide {
-            scroll-snap-align: start;
-            min-height: 100vh;
-            width: 100vw;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 0;
-        }
-
-        /* Glassmorphism Light Theme */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 10px 40px -10px rgba(79, 70, 229, 0.15);
-        }
-
-        /* Abstract Shapes Background */
-        .shape { position: absolute; z-index: 0; filter: blur(50px); opacity: 0.6; border-radius: 50%; }
-        .shape-1 { top: -10%; right: -10%; width: 500px; height: 500px; background: #e0e7ff; animation: float 8s infinite; }
-        .shape-2 { bottom: -10%; left: -10%; width: 600px; height: 600px; background: #fce7f3; animation: float 10s infinite reverse; }
-        .shape-3 { top: 30%; left: 20%; width: 400px; height: 400px; background: #ccfbf1; animation: float 12s infinite; }
-
-        /* Animations */
-        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-20px, 20px); } }
-        @keyframes pulse-ring { 
-            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); } 
-            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); } 
-            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); } 
-        }
-        @keyframes morph {
-            0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
-            34% { border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%; }
-            67% { border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%; }
-            100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
-        }
-        @keyframes bounce-x { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-10px); } }
-        
-        .pulse-btn { animation: pulse-ring 2s infinite; }
-        .morph-cell { animation: morph 8s ease-in-out infinite; }
-        .bounce-arrow { animation: bounce-x 2s infinite; }
-
-        .content-z { z-index: 10; position: relative; width: 100%; max-width: 68rem; margin: 0 auto; padding: 1.5rem; }
-
-        /* --- THE CELL EXPLORER (Interactive) --- */
-        #cell-simulation-container {
-            transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-origin: center;
-        }
-        .zoomed-in {
-            transform: scale(1.6);
-        }
-        .main-cell {
-            position: relative;
-            width: 280px; height: 280px;
-            background: radial-gradient(circle, #e0f2fe 0%, #bae6fd 100%);
-            border: 8px solid #7dd3fc;
-            margin: 0 auto;
-            box-shadow: inset 0 0 40px rgba(56, 189, 248, 0.5), 0 20px 40px rgba(0,0,0,0.1);
-            transition: all 0.5s;
-        }
-        @media (min-width: 768px) { .main-cell { width: 400px; height: 400px; } }
-        
-        .organelle {
-            position: absolute;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex; flex-direction: column; items-center; justify-center; text-align: center;
-        }
-        .organelle::after {
-            content: '';
-            position: absolute; inset: -5px; border-radius: 50%;
-            border: 2px dashed rgba(99, 102, 241, 0.5);
-            animation: spin 4s linear infinite;
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .organelle:hover { transform: scale(1.2); z-index: 20; }
-        .organelle:hover::after { opacity: 1; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .org-nucleus { top: 30%; left: 30%; font-size: 3.5rem; animation: float 4s ease-in-out infinite; }
-        .org-mito { top: 20%; right: 20%; font-size: 2.5rem; animation: float 3s ease-in-out infinite 1s; }
-        .org-vacuole { bottom: 25%; left: 25%; font-size: 2.5rem; animation: float 5s ease-in-out infinite 2s; }
-        .org-golgi { bottom: 30%; right: 25%; font-size: 2.5rem; animation: float 4.5s ease-in-out infinite 0.5s; }
-
-        .interactive-badge {
-            background: linear-gradient(135deg, #f43f5e, #ec4899);
-            color: white; padding: 0.5rem 1.5rem; border-radius: 9999px; font-weight: bold;
-            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.4);
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            animation: pulse-ring 2s infinite;
-        }
-
-        /* Flip Cards */
-        .flip-container { perspective: 1000px; height: 320px; }
-        .flip-card {
-            width: 100%; height: 100%; transition: transform 0.8s;
-            transform-style: preserve-3d; cursor: pointer;
-        }
-        .flip-container:hover .flip-card, .flip-container.active .flip-card { transform: rotateY(180deg); }
-        .flip-front, .flip-back {
-            position: absolute; width: 100%; height: 100%;
-            backface-visibility: hidden; border-radius: 1.5rem;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;
-        }
-        .flip-front { background: white; border: 2px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
-        .flip-back { transform: rotateY(180deg); color: white; }
-        .bg-rose-grad { background: linear-gradient(135deg, #fb7185, #e11d48); }
-        .bg-teal-grad { background: linear-gradient(135deg, #34d399, #059669); }
-
-        /* Tabs */
-        .tab-content { display: none; animation: fadeIn 0.5s ease-in; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>مركز الفحوصات الموحد — تقرير مقارنة المراكز</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a; --bg-2: #0f1424;
+    --surface: #151b2f; --surface-2: #1c2340;
+    --border: #232b47; --border-2: #2d3759;
+    --text: #e7ecf7; --muted: #8893b3; --dim: #5d6788;
+    --purple: #8b7ce5; --purple-light: #b6a7f0;
+    --green: #7ee0b8; --green-dark: #5fc99c;
+    --orange: #ffb066; --red: #ff7b8a;
+    --blue: #6ec4f7; --pink: #f5a3c7; --yellow: #ffd76e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 14px; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; }
+  .shell { max-width: 440px; margin: 0 auto; padding: 14px 12px 50px; background: var(--bg); }
+  @media (min-width: 600px) { .shell { padding: 18px 16px 60px; max-width: 480px; } }
+  .header { text-align: center; padding: 6px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+  .header .logo { display: inline-flex; align-items: center; gap: 6px; color: var(--purple); font-size: 9px; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
+  .header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; line-height: 1.35; }
+  .header .sub { color: var(--muted); font-size: 11px; margin-bottom: 10px; }
+  .header-bar { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 10.5px; color: var(--muted); }
+  .pill .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+  .btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: all 0.15s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-danger { background: rgba(255,123,138,0.1); border-color: rgba(255,123,138,0.3); color: var(--red); }
+  .btn-primary { background: linear-gradient(135deg, var(--purple), #7c6cd9); border-color: transparent; color: white; font-weight: 600; padding: 11px 24px; font-size: 12.5px; }
+  .export-wrap { position: relative; display: inline-block; }
+  .export-menu { position: absolute; top: 100%; left: 0; margin-top: 6px; background: var(--surface); border: 1px solid var(--border-2); border-radius: 10px; padding: 6px; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 100; display: none; }
+  .export-menu.show { display: block; }
+  .export-opt { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 7px; cursor: pointer; font-size: 11.5px; color: var(--text); }
+  .export-opt:hover { background: var(--surface-2); }
+  .export-opt .ic { font-size: 16px; flex-shrink: 0; }
+  .export-opt .meta { font-size: 9.5px; color: var(--muted); display: block; margin-top: 1px; }
+  .intro { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  .intro h2 { font-size: 14px; font-weight: 600; margin-bottom: 6px; text-align: center; }
+  .intro p { color: var(--muted); text-align: center; font-size: 11.5px; margin: 0 auto 12px; line-height: 1.65; }
+  .target-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .target-row .target { flex: 1; min-width: 90px; padding: 9px 8px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 9px; border-right: 3px solid var(--c, var(--purple)); text-align: center; }
+  .target-row .target h4 { font-size: 10.5px; font-weight: 600; margin-bottom: 3px; }
+  .target-row .target .meta { font-size: 10px; color: var(--c, var(--purple)); font-weight: 600; }
+  .upload { background: var(--surface); border: 2px dashed var(--border-2); border-radius: 12px; padding: 24px 14px; text-align: center; cursor: pointer; transition: all 0.2s; display: block; }
+  .upload.dragover { border-color: var(--purple); background: var(--surface-2); }
+  .upload h3 { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+  .upload p { color: var(--muted); font-size: 11.5px; margin-bottom: 14px; }
+  #fileInput { display: none; }
+  .status { margin-top: 12px; padding: 9px 12px; border-radius: 9px; background: var(--bg-2); border: 1px solid var(--border); font-size: 11px; display: none; text-align: right; }
+  .status.show { display: block; }
+  .status.ok { border-color: var(--green); }
+  .status.err { border-color: var(--red); color: var(--red); }
+  .spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--border-2); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-left: 5px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress { height: 3px; background: var(--bg-2); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress > div { height: 100%; background: linear-gradient(90deg, var(--purple), #7c6cd9); width: 0%; transition: width 0.3s; }
+  .section { margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; }
+  .section .bar { width: 3px; height: 16px; border-radius: 2px; background: var(--c, var(--purple)); flex-shrink: 0; }
+  .section h2 { font-size: 13.5px; font-weight: 600; }
+  .section .desc { font-size: 10.5px; color: var(--muted); margin-right: auto; }
+  .hero { background: linear-gradient(135deg, var(--surface), var(--surface-2)); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; margin-bottom: 10px; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; right: 0; top: 0; width: 4px; height: 100%; background: var(--c, var(--green)); }
+  .hero h3 { font-size: 11.5px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  .hero .big-num { font-size: 32px; font-weight: 700; line-height: 1; font-family: 'JetBrains Mono', monospace; color: var(--c, var(--green)); margin-bottom: 6px; }
+  .hero-prog { height: 8px; background: var(--bg-2); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+  .hero-prog > div { height: 100%; border-radius: 4px; background: var(--c, var(--green)); transition: width 0.8s ease; }
+  .hero-sub { display: grid; grid-template-columns: 1fr 1fr; font-size: 10.5px; gap: 6px; }
+  .hero-sub > span { color: var(--muted); }
+  .hero-sub strong { color: var(--text); font-weight: 600; }
+  .kpi-row { display: grid; gap: 7px; margin-bottom: 10px; grid-template-columns: 1fr 1fr; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 11px; position: relative; overflow: hidden; }
+  .kpi::before { content: ''; position: absolute; right: 0; top: 0; width: 3px; height: 100%; background: var(--c, var(--purple)); opacity: 0.7; }
+  .kpi .lbl { font-size: 9.5px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
+  .kpi .val { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; margin-bottom: 3px; }
+  .kpi .sub { font-size: 9.5px; color: var(--dim); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .card-head { margin-bottom: 10px; }
+  .card-head h3 { font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
+  .card-head p { font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+  .chart-box { position: relative; width: 100%; height: 240px; }
+  .chart-box.tall { height: 320px; }
+  .chart-box.xtall { height: 480px; }
+  .mini-row { display: grid; gap: 6px; margin-top: 10px; }
+  .mini-row.c2 { grid-template-columns: 1fr 1fr; }
+  .mini-row.c3 { grid-template-columns: repeat(3, 1fr); }
+  .mini { background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; text-align: center; }
+  .mini .v { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--c, var(--text)); }
+  .mini .l { font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .tier-grid { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+  .tier { background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; border-right: 3px solid var(--c, var(--green)); }
+  .tier-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .tier-h .name { font-size: 11px; font-weight: 600; }
+  .tier-h .cnt { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--c); }
+  .tier-desc { font-size: 9.5px; color: var(--muted); margin-bottom: 6px; }
+  .tier-list { font-size: 10.5px; max-height: 110px; overflow-y: auto; line-height: 1.7; }
+  .tier-list::-webkit-scrollbar { width: 3px; }
+  .tier-list::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+  .tier-list .row { display: flex; justify-content: space-between; padding: 1px 0; gap: 6px; }
+  .tier-list .row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tier-list .row .v { font-family: 'JetBrains Mono', monospace; color: var(--muted); flex-shrink: 0; }
+  .insights-grid { display: grid; gap: 7px; }
+  .insight { display: flex; gap: 9px; padding: 10px 11px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 9px; border-right: 3px solid var(--c, var(--purple)); }
+  .insight .ic { font-size: 16px; flex-shrink: 0; line-height: 1.2; }
+  .insight h5 { font-size: 11.5px; font-weight: 600; margin-bottom: 2px; }
+  .insight p { font-size: 11px; color: var(--muted); line-height: 1.55; }
+  .table-wrap { overflow-x: auto; margin: 0 -12px; padding: 0 12px; }
+  .table-scroll { max-height: 460px; overflow-y: auto; }
+  .table-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead th { text-align: right; padding: 7px 8px; color: var(--muted); font-weight: 500; font-size: 9.5px; border-bottom: 1px solid var(--border); background: var(--bg-2); position: sticky; top: 0; z-index: 1; white-space: nowrap; }
+  tbody td { padding: 7px 8px; border-bottom: 1px solid var(--border); font-size: 11px; white-space: nowrap; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody tr:last-child td { border-bottom: none; }
+  .num { font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; direction: ltr; text-align: left; font-size: 10.5px; }
+  .t-good { color: var(--green); font-weight: 600; }
+  .t-warn { color: var(--orange); font-weight: 600; }
+  .t-bad { color: var(--red); font-weight: 600; }
+  .t-na { color: var(--dim); }
+  .t-n { color: var(--green); font-weight: 600; }
+  .t-h { color: var(--red); font-weight: 600; }
+  .t-l { color: var(--orange); font-weight: 600; }
+  .bar-c { position: relative; }
+  .bar-c .bg { position: absolute; inset: 4px 8px; background: rgba(139,124,229,0.18); border-radius: 3px; z-index: 0; }
+  .bar-c > span { position: relative; z-index: 1; }
+  .rating { color: var(--orange); letter-spacing: 1px; font-size: 10.5px; }
+  .search { width: 100%; padding: 8px 11px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 11.5px; font-family: inherit; margin-bottom: 9px; }
+  .search:focus { outline: none; border-color: var(--purple); }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tab { padding: 5px 10px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px; font-size: 10.5px; color: var(--muted); cursor: pointer; font-family: inherit; }
+  .tab.active { background: var(--purple); border-color: var(--purple); color: white; font-weight: 600; }
+  .note { background: rgba(139,124,229,0.08); border: 1px solid rgba(139,124,229,0.22); border-radius: 9px; padding: 9px 11px; margin-bottom: 10px; font-size: 10.5px; line-height: 1.6; color: var(--muted); }
+  .note strong { color: var(--text); font-weight: 600; }
+  #app { display: none; }
+  #app.show { display: block; }
+  #upload-section { display: block; }
+  #upload-section.hide { display: none; }
+  body.pdf-desktop .shell { max-width: 1100px !important; }
+  body.pdf-desktop .chart-box { height: 320px !important; }
+  body.pdf-desktop .chart-box.xtall { height: 500px !important; }
+  body.pdf-desktop .tier-grid { grid-template-columns: repeat(4, 1fr) !important; }
+  body.pdf-desktop .kpi-row { grid-template-columns: repeat(4, 1fr) !important; }
+  footer { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; color: var(--dim); font-size: 9.5px; flex-wrap: wrap; gap: 6px; }
+</style>
 </head>
 <body>
+<div class="shell" id="rootShell">
+  <div class="header">
+    <div class="logo"><span>UNIFIED LAB CENTER</span></div>
+    <h1>مركز الفحوصات الموحد</h1>
+    <div class="sub">تقرير مقارنة المراكز الصحية</div>
+    <div class="header-bar">
+      <span class="pill"><span class="dot"></span> جاهز</span>
+      <span class="pill mono" id="datePill">—</span>
+      <button class="btn btn-danger" id="reloadBtn" style="display:none">⟳ ملف جديد</button>
+      <div class="export-wrap" id="exportWrap" style="display:none">
+        <button class="btn btn-danger" id="pdfBtn">⤓ تصدير PDF</button>
+        <div class="export-menu" id="exportMenu">
+          <div class="export-opt" data-mode="mobile">
+            <span class="ic">📱</span>
+            <div><div>للجوال (واتس)</div><span class="meta">A4 عمودي · مناسب للجوال</span></div>
+          </div>
+          <div class="export-opt" data-mode="desktop">
+            <span class="ic">💻</span>
+            <div><div>للكمبيوتر</div><span class="meta">A4 عرضي · واسع وشامل</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Background -->
-    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
+  <div id="upload-section">
+    <div class="intro">
+      <h2>عن التقرير</h2>
+      <p>تقرير مرجعي يقارن أداء جميع المراكز الصحية: أحجام العينات، أوقات الوصول، النتائج، وإعادات الفحص. مصمم ليُعرض على الجوال ويُرسل عبر واتس.</p>
+      <div class="target-row">
+        <div class="target" style="--c: var(--orange)"><h4>وصول العينة</h4><div class="meta">≤ 4.5 س</div></div>
+        <div class="target" style="--c: var(--green)"><h4>الالتزام</h4><div class="meta">≥ 90%</div></div>
+        <div class="target" style="--c: var(--purple)"><h4>كل عينة</h4><div class="meta">= panel واحد</div></div>
+      </div>
+    </div>
+    <label class="upload" id="dropZone" for="fileInput">
+      <h3>ارفع ملف البيانات</h3>
+      <p>CSV أو Excel</p>
+      <span class="btn btn-primary">اختر الملف</span>
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+      <div class="status" id="status"><span id="statusText"></span><div class="progress" id="progress" style="display:none"><div id="progressBar"></div></div></div>
+    </label>
+  </div>
+
+  <div id="app">
+    <div class="note">
+      <strong>المصطلحات:</strong> كل <strong>Sample_ID</strong> = عينة واحدة (panel).
+      <strong>وصول العينة</strong> = من السحب إلى الاستقبال. <strong>الالتزام</strong> = نسبة العينات الواصلة ضمن ٤.٥ ساعة.
     </div>
 
-    <!-- أزرار التنقل -->
-    <div class="controls fixed right-4 bottom-4 md:right-8 md:bottom-8 z-50 flex flex-col gap-3">
-        <button onclick="scrollSlide(-1)" class="w-12 h-12 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-indigo-500 hover:bg-white shadow-lg transition transform hover:-translate-y-1">
-            <svg class="w-6 h-6 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-        </button>
-        <button onclick="scrollSlide(1)" class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white hover:bg-indigo-700 shadow-lg pulse-btn transition transform hover:-translate-y-1">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-        </button>
+    <!-- 1) حجم العمل -->
+    <div class="section" style="--c: var(--purple)"><span class="bar"></span><h2>حجم العمل</h2><span class="desc">الأرقام الكلية</span></div>
+    <div class="kpi-row" id="kpisMain"></div>
+    <div class="card">
+      <div class="card-head"><h3>الحجم اليومي</h3><p>عدد العينات لكل يوم خلال الفترة</p></div>
+      <div class="chart-box"><canvas id="dailyVolChart"></canvas></div>
+      <div class="mini-row c3">
+        <div class="mini" style="--c:var(--purple-light)"><div class="v" id="mAvgDaily">—</div><div class="l">متوسط/يوم</div></div>
+        <div class="mini" style="--c:var(--green)"><div class="v" id="mMaxDaily">—</div><div class="l">أعلى يوم</div></div>
+        <div class="mini" style="--c:var(--orange)"><div class="v" id="mMinDaily">—</div><div class="l">أقل يوم</div></div>
+      </div>
     </div>
 
-    <!-- نقاط التنقل الجانبية -->
-    <div class="nav-dots fixed left-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-3"></div>
+    <!-- 2) مقارنة أحجام المراكز -->
+    <div class="section" style="--c: var(--blue)"><span class="bar"></span><h2>مقارنة أحجام المراكز</h2><span class="desc">كم عينة لكل مركز</span></div>
+    <div class="card"><div class="card-head"><h3>أعلى المراكز بعدد العينات</h3><p>أعلى ١٥ مركز نشاطاً</p></div><div class="chart-box xtall"><canvas id="topPhcChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>أعلى المراكز بعدد المرضى</h3><p>أكثر المراكز خدمة للمرضى</p></div><div class="chart-box xtall"><canvas id="topPatientsChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>متوسط العينات لكل مريض</h3><p>هل المريض يأتي بعينة واحدة أم عدة؟</p></div><div class="chart-box xtall"><canvas id="samplesPerPatientChart"></canvas></div></div>
 
-    <div id="presentation" class="slide-container">
+    <!-- 3) وصول العينات -->
+    <div class="section" style="--c: var(--orange)"><span class="bar"></span><h2>وصول العينات</h2><span class="desc">الالتزام بـ ٤.٥ ساعة</span></div>
+    <div class="hero" id="heroBox"></div>
+    <div class="card"><div class="card-head"><h3>مقارنة المراكز — متوسط الوصول والالتزام</h3><p>متوسط الزمن مع نسبة الالتزام · أعلى ١٥ مركز</p></div><div class="chart-box xtall"><canvas id="arrivalComboChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>أقل المراكز التزاماً</h3><p>تحتاج تدخل</p></div><div class="chart-box xtall"><canvas id="worstComplianceChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>أعلى المراكز التزاماً</h3><p>نماذج يُحتذى بها</p></div><div class="chart-box xtall"><canvas id="bestComplianceChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>أعداد العينات المتأخرة</h3><p>تجاوزت ٤.٥ ساعة — أعلى ١٥ مركز</p></div><div class="chart-box xtall"><canvas id="overTargetChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>P90 لكل مركز</h3><p>الزمن الذي تصل ضمنه ٩٠% من العينات</p></div><div class="chart-box xtall"><canvas id="p90Chart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>أعلى مدة وصول مسجلة</h3><p>أسوأ حالة في كل مركز</p></div><div class="chart-box xtall"><canvas id="worstCaseChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>توزيع المراكز حسب الالتزام</h3><p>كم مركز عند كل مستوى</p></div><div class="chart-box"><canvas id="phcComplianceChart"></canvas></div></div>
 
-        <!-- الشريحة 1: البداية -->
-        <section class="slide" id="slide-0">
-            <div class="content-z flex flex-col items-center justify-center text-center">
-                <div class="glass-card rounded-[2.5rem] p-10 md:p-14 w-full max-w-4xl transform transition hover:scale-105 duration-700">
-                    <div class="w-28 h-28 bg-gradient-to-tr from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner relative">
-                        <span class="text-6xl absolute" style="animation: float 3s infinite">🔬</span>
-                        <div class="absolute -right-2 -top-2 w-8 h-8 bg-yellow-300 rounded-full flex items-center justify-center text-xs shadow-lg bounce-arrow">✨</div>
-                    </div>
-                    <h1 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 mb-6 leading-tight">
-                        أسرار عالم الخلايا
-                    </h1>
-                    <p class="text-xl md:text-2xl text-slate-600 mb-10 font-medium">رحلة تفاعلية ممتعة لاكتشاف وحدة البناء الأساسية للحياة!</p>
-                    
-                    <div class="flex flex-col md:flex-row gap-6 justify-center items-center bg-white/60 p-6 rounded-3xl border border-white/50 max-w-2xl mx-auto mb-8">
-                        <div class="text-center px-6 md:border-l-2 border-slate-200">
-                            <p class="text-sm text-slate-500 mb-1">إعداد الطالبة المبدعة</p>
-                            <p class="text-2xl font-bold text-indigo-900">لمار نادر الرشيدي</p>
-                        </div>
-                        <div class="text-center px-6">
-                            <p class="text-sm text-slate-500 mb-1">الصف والفصل</p>
-                            <p class="text-2xl font-bold text-pink-600">أولى متوسط ٣</p>
-                        </div>
-                    </div>
+    <!-- 4) أيام الأسبوع -->
+    <div class="section" style="--c: var(--yellow)"><span class="bar"></span><h2>أيام الأسبوع</h2><span class="desc">السبت إلى الجمعة</span></div>
+    <div class="card">
+      <div class="card-head"><h3>الحجم حسب أيام الأسبوع</h3><p>عدد العينات لكل يوم</p></div>
+      <div class="chart-box"><canvas id="weekdayVolChart"></canvas></div>
+      <div class="mini-row c2">
+        <div class="mini" style="--c:var(--green)"><div class="v" id="mBusyDay">—</div><div class="l">الأعلى</div></div>
+        <div class="mini" style="--c:var(--orange)"><div class="v" id="mQuietDay">—</div><div class="l">الأقل</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-head"><h3>أداء وصول العينة حسب اليوم</h3><p>متوسط الوصول والالتزام لكل يوم</p></div><div class="chart-box tall"><canvas id="arrivalByDayChart"></canvas></div></div>
 
-                    <p class="text-sm text-slate-400 mb-6">تم التصميم بواسطة Gemini Pro</p>
-                    
-                    <button onclick="scrollSlide(1)" class="group px-10 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full text-xl font-bold shadow-xl hover:shadow-2xl hover:scale-110 transition-all duration-300 flex items-center gap-3 mx-auto">
-                        <span>ابدأ الرحلة التفاعلية</span>
-                        <span class="group-hover:translate-x-[-5px] transition-transform">👈</span>
-                    </button>
-                </div>
-            </div>
-        </section>
+    <!-- 5) تصنيف المراكز -->
+    <div class="section" style="--c: var(--pink)"><span class="bar"></span><h2>تصنيف المراكز</h2><span class="desc">A / B / C / D</span></div>
+    <div class="card"><div class="card-head"><h3>تصنيف ذكي حسب الأداء</h3><p>حسب الالتزام بهدف ٤.٥ ساعة</p></div><div class="tier-grid" id="tierList"></div></div>
 
-        <!-- الشريحة 2: ماهي الخلية -->
-        <section class="slide" id="slide-1">
-            <div class="content-z flex flex-col md:flex-row items-center gap-12">
-                <div class="w-full md:w-1/2 glass-card p-10 md:p-12 rounded-[2.5rem]">
-                    <div class="interactive-badge mb-6 text-sm">💡 شريحة تفاعلية: جربي تضغطي على الزر تحت</div>
-                    <h2 class="text-4xl font-bold text-indigo-800 mb-6">ماهي الخلية؟ 🤔</h2>
-                    <p class="text-2xl text-slate-700 leading-relaxed font-medium mb-8">
-                        تخيلي أن جسمك مثل <strong>المدينة الكبيرة الذكية</strong>، الخلايا هي <strong>الطوب</strong> الصغير المليء بالحياة اللي يبني هذي المدينة كلها!
-                    </p>
-                    <ul class="space-y-4 text-xl text-slate-600 mb-8">
-                        <li class="flex items-center gap-4 bg-white/50 p-4 rounded-2xl">
-                            <span class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xl shadow-sm">✓</span>
-                            هي أصغر وحدة بناء في الكائن الحي.
-                        </li>
-                        <li class="flex items-center gap-4 bg-white/50 p-4 rounded-2xl">
-                            <span class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xl shadow-sm">✓</span>
-                            تتنفس، تتغذى، وتنقسم لننمو.
-                        </li>
-                    </ul>
-                    <button onclick="document.getElementById('fun-fact-modal').classList.remove('hidden')" class="w-full py-4 bg-pink-100 text-pink-700 rounded-2xl font-bold text-xl hover:bg-pink-200 transition-colors flex items-center justify-center gap-2 border-2 border-pink-200">
-                        <span>🌟 اضغطي هنا لمعلومة صادمة!</span>
-                    </button>
-                </div>
-                <div class="w-full md:w-1/2 flex justify-center relative">
-                    <div class="w-72 h-72 md:w-96 md:h-96 bg-white rounded-full flex items-center justify-center shadow-2xl border-8 border-indigo-100 relative" style="animation: float 6s infinite ease-in-out">
-                        <span class="text-9xl">🦠</span>
-                        <div class="absolute -right-4 top-10 w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center text-3xl shadow-lg" style="animation: float 4s infinite reverse">✨</div>
-                        <div class="absolute -left-4 bottom-10 w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-2xl shadow-lg" style="animation: float 5s infinite">🔬</div>
-                    </div>
-                </div>
-            </div>
+    <!-- 6) النتائج -->
+    <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>مقارنة النتائج</h2><span class="desc">طبيعي vs خارج المعدل</span></div>
+    <div class="card"><div class="card-head"><h3>نتائج الفحوصات حسب المركز</h3><p>توزيع طبيعي / مرتفع / منخفض — أعلى ١٥</p></div><div class="chart-box xtall"><canvas id="resultsByPhcChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>نسبة خارج المعدل لكل مركز</h3><p>قد يحتاج مراجعة فئات المرضى أو دقة العينات</p></div><div class="chart-box xtall"><canvas id="abByPhcChart"></canvas></div></div>
 
-            <!-- Modal for Fun Fact -->
-            <div id="fun-fact-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-                <div class="bg-white p-10 rounded-[2.5rem] max-w-lg w-full text-center shadow-2xl transform scale-100 transition-transform">
-                    <div class="text-7xl mb-4">🤯</div>
-                    <h3 class="text-3xl font-bold text-indigo-800 mb-4">هل تعلمين؟</h3>
-                    <p class="text-2xl text-slate-600 leading-relaxed mb-8">
-                        جسم الإنسان البالغ يحتوي على أكثر من <strong class="text-pink-600 text-4xl block my-4">30 تريليون خلية!</strong>
-                        كلها تشتغل ليل ونهار عشانك.
-                    </p>
-                    <button onclick="document.getElementById('fun-fact-modal').classList.add('hidden')" class="px-8 py-3 bg-indigo-600 text-white rounded-full font-bold text-lg hover:bg-indigo-700">واو! إغلاق</button>
-                </div>
-            </div>
-        </section>
+    <!-- 7) إعادات -->
+    <div class="section" style="--c: var(--green)"><span class="bar"></span><h2>إعادة الفحوصات</h2><span class="desc">حسب المركز</span></div>
+    <div class="card"><div class="card-head"><h3>أعلى المراكز في إعادة الفحوصات</h3><p>عدد حالات إعادة فحص نفس المريض</p></div><div class="chart-box xtall"><canvas id="repByPhcChart"></canvas></div></div>
 
-        <!-- الشريحة 3: المحاكي -->
-        <section class="slide" id="slide-2">
-            <div class="content-z flex flex-col items-center">
-                <div class="text-center mb-8">
-                    <div class="interactive-badge mb-4 text-lg">🚀 محاكي تفاعلي: ادخلي داخل الخلية!</div>
-                    <h2 class="text-4xl md:text-5xl font-bold text-indigo-900 mb-4">اكتشفي الأسرار من الداخل 🔍</h2>
-                    <p class="text-xl text-slate-600">اضغطي على الزر للتكبير، ثم <strong class="text-pink-600 border-b-2 border-pink-300">اضغطي على الأشكال الملونة</strong> لاكتشاف وظيفتها.</p>
-                </div>
-                
-                <div class="flex flex-col md:flex-row items-center gap-12 w-full justify-center mt-4">
-                    
-                    <!-- الخلية التفاعلية -->
-                    <div class="relative">
-                        <!-- زر التكبير -->
-                        <button id="zoom-btn" onclick="toggleZoom()" class="absolute -top-16 left-1/2 transform -translate-x-1/2 z-30 bg-indigo-600 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-indigo-700 flex items-center gap-2 pulse-btn">
-                            <span>تكبير الدخول 🔍</span>
-                        </button>
-
-                        <div id="cell-simulation-container" class="relative z-20">
-                            <div class="main-cell morph-cell" id="main-cell-shape">
-                                <!-- العضيات -->
-                                <div class="organelle org-nucleus" onclick="showOrganelleInfo('النواة (المدير)', '🧠', 'هي الإدارة العليا! تتحكم في كل الخلية وفيها شفرتك الوراثية (DNA) اللي تحدد كل صفاتك.', 'text-purple-700', 'bg-purple-100')">
-                                    <span class="text-[3.5rem] drop-shadow-md">🧠</span>
-                                </div>
-                                <div class="organelle org-mito" onclick="showOrganelleInfo('الميتوكندريا (مصنع الطاقة)', '⚡', 'هنا يتم حرق الغذاء لتوليد الطاقة! بدونها الخلية ما تقدر تتحرك ولا تعيش.', 'text-orange-700', 'bg-orange-100')">
-                                    <span class="text-[2.5rem] drop-shadow-md">⚡</span>
-                                </div>
-                                <div class="organelle org-vacuole" onclick="showOrganelleInfo('الفجوة (المخزن)', '💧', 'عبارة عن مستودع صغير، تخزن فيه الخلية المويه، الأكل، وحتى الفضلات.', 'text-blue-700', 'bg-blue-100')">
-                                    <span class="text-[2.5rem] drop-shadow-md">💧</span>
-                                </div>
-                                <div class="organelle org-golgi" onclick="showOrganelleInfo('الغشاء البلازمي (الحارس)', '🛡️', 'الجدار المرن اللي يحيط بالخلية، يشتغل كحارس أمن يقرر إيش يدخل وإيش يطلع.', 'text-teal-700', 'bg-teal-100')">
-                                    <span class="text-[2.5rem] drop-shadow-md">🛡️</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- شاشة عرض معلومات العضيات -->
-                    <div id="organelle-info-panel" class="glass-card p-8 rounded-3xl w-full md:w-96 opacity-50 grayscale transition-all duration-500 min-h-[250px] flex flex-col justify-center border-4 border-transparent">
-                        <div class="text-center" id="info-placeholder">
-                            <span class="text-5xl mb-4 block opacity-50">👆</span>
-                            <p class="text-lg text-slate-500 font-bold">اضغطي على أي جزء داخل الخلية بعد التكبير لتعرفي وظيفته!</p>
-                        </div>
-                        <div id="info-content" class="hidden">
-                            <div class="flex items-center gap-4 mb-4">
-                                <div id="info-icon" class="w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-inner"></div>
-                                <h3 id="info-title" class="text-2xl font-bold"></h3>
-                            </div>
-                            <p id="info-desc" class="text-xl text-slate-700 leading-relaxed"></p>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- الشريحة 4: أنواع الخلايا -->
-        <section class="slide" id="slide-3">
-            <div class="content-z flex flex-col text-center w-full">
-                <div class="interactive-badge mb-6 mx-auto text-sm">🔄 تفاعلي: اضغطي على البطاقة لقلبها</div>
-                <h2 class="text-4xl md:text-5xl font-bold text-pink-600 mb-12">حيوانية أم نباتية؟ 🌿🐾</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto w-full">
-                    <!-- الخلية الحيوانية -->
-                    <div class="flip-container" onclick="this.classList.toggle('active')">
-                        <div class="flip-card">
-                            <div class="flip-front">
-                                <div class="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center text-5xl mb-6">🦁</div>
-                                <h3 class="text-3xl font-bold text-rose-600 mb-2">الخلية الحيوانية</h3>
-                                <p class="text-slate-500 mb-4">(موجودة في أجسامنا)</p>
-                                <span class="px-4 py-2 bg-slate-100 rounded-full text-slate-600 text-sm font-bold flex items-center gap-2">اضغطي للقلب <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></span>
-                            </div>
-                            <div class="flip-back bg-rose-grad">
-                                <h3 class="text-3xl font-bold mb-6 border-b border-white/30 pb-4">خصائصها المميزة</h3>
-                                <ul class="text-xl space-y-4 text-right inline-block">
-                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> شكلها مرن وتقدر تتغير.</li>
-                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> <strong class="text-yellow-200">ليس لها</strong> جدار خلوي صلب.</li>
-                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> فجواتها صغيرة جداً.</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- الخلية النباتية -->
-                    <div class="flip-container" onclick="this.classList.toggle('active')">
-                        <div class="flip-card">
-                            <div class="flip-front">
-                                <div class="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center text-5xl mb-6">🌻</div>
-                                <h3 class="text-3xl font-bold text-teal-600 mb-2">الخلية النباتية</h3>
-                                <p class="text-slate-500 mb-4">(موجودة في الأشجار والنباتات)</p>
-                                <span class="px-4 py-2 bg-slate-100 rounded-full text-slate-600 text-sm font-bold flex items-center gap-2">اضغطي للقلب <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></span>
-                            </div>
-                            <div class="flip-back bg-teal-grad">
-                                <h3 class="text-3xl font-bold mb-6 border-b border-white/30 pb-4">خصائصها المميزة</h3>
-                                <ul class="text-xl space-y-4 text-right inline-block">
-                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> شكلها ثابت يشبه الصندوق.</li>
-                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> لها <strong class="text-yellow-200">جدار خلوي</strong> يحميها.</li>
-                                    <li class="flex items-center gap-2"><span class="bg-white/20 p-1 rounded">✔️</span> فيها بلاستيدات خضراء (لتصنع أكلها).</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- الشريحة 5: مواضيع متقدمة -->
-        <section class="slide" id="slide-4">
-            <div class="content-z w-full">
-                <div class="interactive-badge mb-6 mx-auto flex w-fit text-sm">👆 تفاعلي: اضغطي على العناوين للتنقل</div>
-                <h2 class="text-4xl font-bold text-center text-indigo-900 mb-8">إبداعات علمية مذهلة 🌟</h2>
-                
-                <div class="glass-card rounded-[2rem] overflow-hidden max-w-4xl mx-auto">
-                    <!-- Tabs Header -->
-                    <div class="flex flex-col md:flex-row bg-slate-100 border-b border-slate-200">
-                        <button onclick="switchTab('tab1')" id="btn-tab1" class="flex-1 py-4 text-xl font-bold text-indigo-600 bg-white border-b-4 border-indigo-600 transition">✨ الخلايا الجذعية</button>
-                        <button onclick="switchTab('tab2')" id="btn-tab2" class="flex-1 py-4 text-xl font-bold text-slate-500 hover:bg-slate-50 transition border-b-4 border-transparent">🧫 زراعة الأنسجة</button>
-                        <button onclick="switchTab('tab3')" id="btn-tab3" class="flex-1 py-4 text-xl font-bold text-slate-500 hover:bg-slate-50 transition border-b-4 border-transparent">👩‍🚀 الخلايا في الفضاء</button>
-                    </div>
-                    
-                    <!-- Tab 1 -->
-                    <div id="tab1" class="tab-content active p-8 md:p-12">
-                        <div class="flex flex-col md:flex-row items-center gap-8">
-                            <div class="text-7xl bg-indigo-100 p-6 rounded-full">🪄</div>
-                            <div>
-                                <h3 class="text-3xl font-bold text-indigo-800 mb-4">الخلايا السحرية (الجذعية)</h3>
-                                <p class="text-xl text-slate-600 leading-relaxed mb-4">هي خلايا "خام" تشبه الصلصال! الدكاترة يقدرون يشكلونها ويحولونها لأي نوع خلية يحتاجه المريض (خلايا قلب، دم، عظم، أو أعصاب).</p>
-                                <span class="inline-block bg-green-100 text-green-700 px-4 py-2 rounded-full font-bold">ثورة في علاج الأمراض المستعصية!</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Tab 2 -->
-                    <div id="tab2" class="tab-content p-8 md:p-12">
-                        <div class="flex flex-col md:flex-row items-center gap-8">
-                            <div class="text-7xl bg-emerald-100 p-6 rounded-full">🌱</div>
-                            <div>
-                                <h3 class="text-3xl font-bold text-emerald-800 mb-4">من خلية إلى نبتة كاملة!</h3>
-                                <p class="text-xl text-slate-600 leading-relaxed mb-4">زراعة الأنسجة تعني أننا نأخذ خلايا قليلة جداً من نبتة، ونحطها في مختبر فيه أكل وحرارة ممتازة، فتتكاثر وتصير نباتات كاملة وكثيرة.</p>
-                                <span class="inline-block bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full font-bold">تستخدم لإنقاذ النباتات النادرة من الانقراض.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tab 3 -->
-                    <div id="tab3" class="tab-content p-8 md:p-12">
-                        <div class="flex flex-col md:flex-row items-center gap-8">
-                            <div class="text-7xl bg-purple-100 p-6 rounded-full">🚀</div>
-                            <div>
-                                <h3 class="text-3xl font-bold text-purple-800 mb-4">تجارب في محطة الفضاء</h3>
-                                <p class="text-xl text-slate-600 leading-relaxed mb-4">العلماء يدرسون الخلايا في الفضاء لأن "انعدام الجاذبية" يخلي الخلايا تنقسم وتتصرف بشكل مختلف تماماً عن الأرض!</p>
-                                <span class="inline-block bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-bold">يساعدنا في اكتشاف أدوية جديدة جداً.</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- الشريحة 6: اللعبة -->
-        <section class="slide" id="slide-5">
-            <div class="content-z flex flex-col items-center">
-                <div class="glass-card p-8 md:p-12 rounded-[2.5rem] w-full max-w-3xl text-center border-4 border-indigo-100 shadow-2xl relative overflow-hidden">
-                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-pink-100 rounded-full mix-blend-multiply opacity-50"></div>
-                    <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-blue-100 rounded-full mix-blend-multiply opacity-50"></div>
-                    
-                    <h2 class="text-4xl font-bold text-indigo-600 mb-4 relative z-10">لعبة: اختبار الذكاء 🧠🎮</h2>
-                    <p class="text-xl text-slate-500 mb-8 relative z-10">نشوف مين اللي كانت مركزة معنا بالرحلة؟</p>
-                    
-                    <div id="quiz-container" class="relative z-10 min-h-[250px]">
-                        <div class="bg-indigo-50 rounded-2xl p-6 mb-8 border border-indigo-100">
-                            <h3 id="question-text" class="text-2xl font-bold text-indigo-900 leading-relaxed">أي جزء من الخلية يشتغل كـ "حارس أمن" ويقرر إيش يدخل وإيش يطلع؟</h3>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="answers-container">
-                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm transition">النواة</button>
-                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm transition">الميتوكندريا</button>
-                            <button onclick="checkAnswer(this, true)" class="p-4 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm transition">الغشاء البلازمي</button>
-                            <button onclick="checkAnswer(this, false)" class="p-4 bg-white border-2 border-slate-200 rounded-2xl text-xl font-bold text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm transition">الجدار الخلوي</button>
-                        </div>
-                    </div>
-
-                    <div id="success-message" class="hidden flex-col items-center justify-center py-10 relative z-10">
-                        <div class="text-8xl mb-6 bounce-arrow">🏆</div>
-                        <h3 class="text-4xl font-bold text-green-500 mb-4">ممتازة جداً!</h3>
-                        <p class="text-2xl text-slate-600 mb-8">إجابة صحيحة، أنتِ عالمة المستقبل!</p>
-                        <button onclick="scrollSlide(1)" class="px-10 py-4 bg-green-500 text-white rounded-full text-xl font-bold hover:bg-green-600 shadow-lg hover:scale-105 transition">النهاية والتتويج 🎉</button>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- الشريحة 7: النهاية -->
-        <section class="slide" id="slide-6">
-            <div class="content-z flex flex-col items-center justify-center text-center h-full">
-                <div class="w-40 h-40 bg-white rounded-full flex items-center justify-center shadow-2xl mb-8 pulse-btn border-8 border-indigo-50">
-                    <span class="text-7xl">👩‍🔬✨</span>
-                </div>
-                <h2 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-pink-500 mb-6">شكراً لتركيزكم!</h2>
-                <p class="text-3xl text-slate-600 mb-12">أتمنى تكون رحلتنا التفاعلية أعجبتكم.</p>
-                
-                <div class="glass-card px-12 py-6 rounded-full inline-block border-2 border-indigo-200 mb-8">
-                    <p class="text-lg text-slate-500 mb-1">إعداد وتصميم الطالبة:</p>
-                    <p class="text-3xl font-bold text-indigo-900">لمار نادر الرشيدي</p>
-                </div>
-
-                <p class="text-sm text-slate-400 mt-2">تم التصميم بواسطة Gemini Pro</p>
-            </div>
-        </section>
-
+    <!-- 8) الجدول -->
+    <div class="section" style="--c: var(--blue)"><span class="bar"></span><h2>الجدول الشامل</h2><span class="desc">كل المراكز</span></div>
+    <div class="card">
+      <div class="card-head"><h3>المقارنة الكاملة <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="phcCount"></span></h3><p>بحث وفلترة — قابل للتمرير الجانبي</p></div>
+      <div class="tabs" id="phcTabs">
+        <button class="tab active" data-f="all">الكل</button>
+        <button class="tab" data-f="bad">&lt; 70%</button>
+        <button class="tab" data-f="warn">70-85%</button>
+        <button class="tab" data-f="good">≥ 85%</button>
+      </div>
+      <input type="text" class="search" id="phcSearch" placeholder="🔍 ابحث عن مركز…" />
+      <div class="table-wrap"><div class="table-scroll">
+        <table id="phcTable">
+          <thead><tr><th>#</th><th>المركز</th><th>عينات</th><th>مرضى</th><th>الالتزام</th><th>متوسط</th><th>وسيط</th><th>P90</th><th>أعلى</th><th>متأخرة</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th><th>إعادات</th><th>تقييم</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div></div>
     </div>
 
-    <script>
-        // التنقل بين الشرائح والدوائر
-        const container = document.getElementById('presentation');
-        const slides = document.querySelectorAll('.slide');
-        const totalSlides = slides.length;
-        let currentSlide = 0;
+    <!-- 9) الخلاصات -->
+    <div class="section" style="--c: var(--purple-light)"><span class="bar"></span><h2>الخلاصات</h2><span class="desc">جاهزة للعرض</span></div>
+    <div class="card"><div class="card-head"><h3>أبرز الملاحظات</h3><p>تحليل تلقائي للأنماط</p></div><div class="insights-grid" id="insights"></div></div>
 
-        const dotsContainer = document.querySelector('.nav-dots');
-        for (let i = 0; i < totalSlides; i++) {
-            const dot = document.createElement('button');
-            dot.className = `w-4 h-4 rounded-full transition-all duration-300 ${i === 0 ? 'bg-indigo-600 scale-125 shadow-md' : 'bg-slate-300'}`;
-            dot.onclick = () => goToSlide(i);
-            dotsContainer.appendChild(dot);
-        }
-        const dots = document.querySelectorAll('.nav-dots button');
+    <footer><div id="footerInfo">مركز الفحوصات الموحد</div><div class="mono" id="footerStats"></div></footer>
+  </div>
+</div>
 
-        function updateDots(index) {
-            dots.forEach((dot, i) => {
-                if (i === index) {
-                    dot.className = 'w-4 h-4 rounded-full transition-all duration-300 bg-indigo-600 scale-125 shadow-md';
-                } else {
-                    dot.className = 'w-4 h-4 rounded-full transition-all duration-300 bg-slate-300';
-                }
-            });
-            // تشغيل احتفال في الشريحة الأخيرة
-            if(index === totalSlides - 1) setTimeout(fireConfetti, 500);
-        }
+<script>
+'use strict';
+const STATE = { data: null, an: null, charts: {} };
+const C = { purple:'#8b7ce5', purpleLight:'#b6a7f0', green:'#7ee0b8', greenDark:'#5fc99c', orange:'#ffb066', red:'#ff7b8a', blue:'#6ec4f7', pink:'#f5a3c7', yellow:'#ffd76e', muted:'#8893b3', dim:'#5d6788', grid: 'rgba(255,255,255,0.05)' };
+Chart.defaults.font.family = "'IBM Plex Sans Arabic', sans-serif";
+Chart.defaults.font.size = 10.5;
+Chart.defaults.color = C.muted;
+Chart.defaults.borderColor = C.grid;
+Chart.defaults.maintainAspectRatio = false;
+Chart.defaults.responsive = true;
+Chart.defaults.animation.duration = 400;
+const ARRIVAL_TARGET = 4.5;
+const fmt = n => (n == null || isNaN(n)) ? '—' : (Math.abs(n) >= 1000 ? Math.round(n).toLocaleString('en-US') : String(Math.round(n)));
+const fmt1 = n => (n == null || isNaN(n)) ? '—' : Number(n).toFixed(1);
+const fmt2 = n => (n == null || isNaN(n)) ? '—' : Number(n).toFixed(2);
+const trunc = (s, n) => s && s.length > n ? s.slice(0, n) + '…' : (s || '');
+const shortName = s => (s || '').replace(' Health Center','').replace(' Primary Healthcare Center','').replace(' – Madinah Health','').replace(' - Madinah Health','').trim();
 
-        function scrollSlide(direction) {
-            currentSlide += direction;
-            if (currentSlide < 0) currentSlide = 0;
-            if (currentSlide >= totalSlides) currentSlide = totalSlides - 1;
-            goToSlide(currentSlide);
-        }
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+const statusEl = document.getElementById('status');
+const statusText = document.getElementById('statusText');
+const progressEl = document.getElementById('progress');
+const progressBar = document.getElementById('progressBar');
 
-        function goToSlide(index) {
-            currentSlide = index;
-            slides[index].scrollIntoView({ behavior: 'smooth' });
-            updateDots(index);
-        }
+fileInput.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
+['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+dropZone.addEventListener('drop', e => { if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
 
-        container.addEventListener('scroll', () => {
-            const scrollPosition = container.scrollTop;
-            const windowHeight = window.innerHeight;
-            const newIndex = Math.round(scrollPosition / windowHeight);
-            if (newIndex !== currentSlide && newIndex >= 0 && newIndex < totalSlides) {
-                currentSlide = newIndex;
-                updateDots(currentSlide);
-            }
-        });
+function setStatus(msg, type='loading') {
+  statusEl.className = 'status show ' + (type === 'success' ? 'ok' : type === 'error' ? 'err' : '');
+  statusText.innerHTML = (type === 'loading' ? '<span class="spinner"></span> ' : '') + msg;
+}
 
-        // دعم الكيبورد للتنقل
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') scrollSlide(1);
-            else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') scrollSlide(-1);
-        });
+async function handleFile(file) {
+  setStatus(`جاري قراءة <strong>${file.name}</strong>`);
+  progressEl.style.display = 'block';
+  progressBar.style.width = '15%';
+  try {
+    const ext = file.name.split('.').pop().toLowerCase();
+    let rows;
+    if (ext === 'csv') rows = await parseCSV(file);
+    else if (ext === 'xlsx' || ext === 'xls') rows = await parseExcel(file);
+    else throw new Error('صيغة غير مدعومة');
+    progressBar.style.width = '45%';
+    setStatus(`تم قراءة <strong>${fmt(rows.length)}</strong> سجل · جاري التحليل…`);
+    await new Promise(r => setTimeout(r, 30));
+    const an = analyze(rows);
+    progressBar.style.width = '85%';
+    STATE.data = rows; STATE.an = an;
+    document.getElementById('upload-section').classList.add('hide');
+    document.getElementById('app').classList.add('show');
+    document.getElementById('reloadBtn').style.display = 'inline-flex';
+    document.getElementById('exportWrap').style.display = 'inline-block';
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    renderAll(an);
+    progressBar.style.width = '100%';
+    setStatus(`✅ تم · <strong>${fmt(an.s.samples)}</strong> عينة · <strong>${an.s.centers}</strong> مركز`, 'success');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch(err) {
+    console.error(err);
+    setStatus(`❌ خطأ: ${err.message}`, 'error');
+    progressEl.style.display = 'none';
+  }
+}
 
-        // --- محاكي الخلية التفاعلي ---
-        let isZoomed = false;
-        function toggleZoom() {
-            const container = document.getElementById('cell-simulation-container');
-            const btn = document.getElementById('zoom-btn');
-            const panel = document.getElementById('organelle-info-panel');
-            const cell = document.getElementById('main-cell-shape');
-            
-            isZoomed = !isZoomed;
-            
-            if(isZoomed) {
-                container.classList.add('zoomed-in');
-                btn.innerHTML = '<span>تصغير 🔙</span>';
-                btn.classList.remove('pulse-btn');
-                btn.classList.replace('bg-indigo-600', 'bg-pink-500');
-                
-                // إيقاف حركة الخلية لتسهيل الضغط
-                cell.classList.remove('morph-cell');
-                
-                // تفعيل لوحة المعلومات
-                panel.classList.remove('opacity-50', 'grayscale');
-                panel.classList.add('border-indigo-300', 'shadow-xl', 'bg-white/95');
-            } else {
-                container.classList.remove('zoomed-in');
-                btn.innerHTML = '<span>تكبير الدخول 🔍</span>';
-                btn.classList.add('pulse-btn');
-                btn.classList.replace('bg-pink-500', 'bg-indigo-600');
-                
-                cell.classList.add('morph-cell');
-                
-                // إعادة لوحة المعلومات لحالة الانتظار
-                panel.classList.add('opacity-50', 'grayscale');
-                panel.classList.remove('border-indigo-300', 'shadow-xl', 'bg-white/95');
-                document.getElementById('info-content').classList.add('hidden');
-                document.getElementById('info-placeholder').classList.remove('hidden');
-            }
-        }
+function parseCSV(file) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, { header:true, skipEmptyLines:true, complete: r => resolve(r.data), error: err => reject(err) });
+  });
+}
+function parseExcel(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        resolve(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: false }));
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+function findCol(row, names) {
+  const keys = Object.keys(row);
+  for (const n of names) {
+    const k = keys.find(k => k.replace(/^\ufeff/, '').trim().toLowerCase() === n.toLowerCase());
+    if (k) return k;
+  }
+  for (const n of names) {
+    const k = keys.find(k => k.replace(/^\ufeff/, '').trim().toLowerCase().includes(n.toLowerCase()));
+    if (k) return k;
+  }
+  return null;
+}
+function pDate(v) {
+  if (!v) return null;
+  const s = String(v).trim();
+  if (!s) return null;
+  if (s.includes('T')) return new Date(s.slice(0, 10) + 'T00:00:00');
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s.slice(0, 10) + 'T00:00:00');
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+function pDT(d, t) {
+  if (!d) return null;
+  const date = pDate(d);
+  if (!date) return null;
+  if (t) {
+    const m = String(t).trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}(?:\.\d+)?))?/);
+    if (m) date.setHours(+m[1], +m[2], parseFloat(m[3] || '0'));
+  }
+  return date;
+}
+function pRange(r) {
+  if (r == null) return [null, null];
+  const s = String(r).trim();
+  const m = s.match(/^(-?\d+\.?\d*)\s*-\s*(-?\d+\.?\d*)$/);
+  if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+  const m2 = s.match(/^<\s*(-?\d+\.?\d*)$/);
+  if (m2) return [-Infinity, parseFloat(m2[1])];
+  const m3 = s.match(/^>\s*(-?\d+\.?\d*)$/);
+  if (m3) return [parseFloat(m3[1]), Infinity];
+  return [null, null];
+}
+function classify(v, r) {
+  if (v == null || v === '') return null;
+  const x = parseFloat(v);
+  if (isNaN(x)) return null;
+  const [lo, hi] = pRange(r);
+  if (lo == null || hi == null) return null;
+  if (x < lo) return 'Low';
+  if (x > hi) return 'High';
+  return 'Normal';
+}
+function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0) / arr.length : 0; }
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a,b) => a-b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2;
+}
+function percentile(arr, p) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a,b) => a-b);
+  return s[Math.min(Math.floor(s.length * p), s.length-1)];
+}
 
-        function showOrganelleInfo(title, emoji, desc, textColor, bgColor) {
-            if(!isZoomed) {
-                // إذا ضغطت بدون تكبير، نسوي تكبير تلقائي أول
-                toggleZoom();
-            }
-            
-            document.getElementById('info-placeholder').classList.add('hidden');
-            const content = document.getElementById('info-content');
-            content.classList.remove('hidden');
-            
-            // إضافة تأثير اختفاء وظهور لتغيير المحتوى
-            content.style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('info-title').innerText = title;
-                document.getElementById('info-title').className = `text-2xl font-bold ${textColor}`;
-                document.getElementById('info-icon').innerText = emoji;
-                document.getElementById('info-icon').className = `w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-inner ${bgColor} ${textColor}`;
-                document.getElementById('info-desc').innerText = desc;
-                
-                content.style.transition = 'opacity 0.4s';
-                content.style.opacity = '1';
-            }, 200);
-        }
+function analyze(rows) {
+  if (!rows.length) throw new Error('الملف فارغ');
+  const first = rows[0];
+  const c = {
+    patient: findCol(first, ['Patient_ID']),
+    phc: findCol(first, ['PHC_Name']),
+    test: findCol(first, ['Test_Name']),
+    sample: findCol(first, ['Sample_ID']),
+    status: findCol(first, ['Sample_Status']),
+    collD: findCol(first, ['Collection_Date']),
+    collT: findCol(first, ['Collection_Time']),
+    recvD: findCol(first, ['Received_Date']),
+    recvT: findCol(first, ['Received_Time']),
+    orderD: findCol(first, ['Order_Date']),
+    orderT: findCol(first, ['Order_Time']),
+    value: findCol(first, ['Result_Value']),
+    range: findCol(first, ['Result_Reference_Range']),
+  };
+  if (!c.sample) throw new Error('Sample_ID مفقود');
 
-        // --- التابات (مواضيع متقدمة) ---
-        function switchTab(tabId) {
-            // إخفاء كل المحتوى
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            // إعادة الأزرار للون الرمادي
-            document.querySelectorAll('[id^="btn-tab"]').forEach(el => {
-                el.classList.remove('text-indigo-600', 'bg-white', 'border-indigo-600');
-                el.classList.add('text-slate-500', 'border-transparent');
-            });
-            
-            // تفعيل المحتوى والزر المختار
-            document.getElementById(tabId).classList.add('active');
-            const btn = document.getElementById('btn-' + tabId);
-            btn.classList.remove('text-slate-500', 'border-transparent');
-            btn.classList.add('text-indigo-600', 'bg-white', 'border-indigo-600');
-        }
+  const samples = new Map();
+  rows.forEach(row => {
+    const sid = String(row[c.sample] || '').trim();
+    if (!sid) return;
+    const status = c.status ? String(row[c.status] || '').trim() : '';
+    if (status === 'Collected') return;
+    if (samples.has(sid)) return;
+    const phc = c.phc ? (String(row[c.phc] || '').trim() || 'غير محدد') : 'غير محدد';
+    const orderDT = pDT(row[c.orderD], row[c.orderT]);
+    const collDT = pDT(row[c.collD], row[c.collT]);
+    const recvDT = pDT(row[c.recvD], row[c.recvT]);
+    let arrival = null;
+    if (collDT && recvDT) arrival = (recvDT - collDT) / 3600000;
+    if (arrival != null && (arrival < 0 || arrival > 720)) arrival = null;
+    const pid = c.patient ? String(row[c.patient] || '').trim() : null;
+    samples.set(sid, { phc, pid, orderDT, collDT, recvDT, arrival });
+  });
 
-        // --- اللعبة ---
-        function checkAnswer(button, isCorrect) {
-            if(isCorrect) {
-                button.classList.remove('border-slate-200', 'text-slate-600');
-                button.classList.add('bg-green-500', 'text-white', 'border-green-600');
-                fireConfetti();
-                
-                setTimeout(() => {
-                    document.getElementById('quiz-container').classList.add('hidden');
-                    document.getElementById('success-message').classList.remove('hidden');
-                    document.getElementById('success-message').classList.add('flex');
-                }, 800);
-            } else {
-                button.classList.remove('border-slate-200');
-                button.classList.add('bg-red-100', 'border-red-400', 'text-red-600');
-                button.style.animation = "bounce-x 0.4s";
-                
-                setTimeout(() => {
-                    button.style.animation = "";
-                    setTimeout(() => {
-                        button.classList.remove('bg-red-100', 'border-red-400', 'text-red-600');
-                        button.classList.add('bg-white', 'border-slate-200', 'text-slate-600');
-                    }, 1000);
-                }, 400);
-            }
-        }
+  const phcMap = new Map();
+  const dailyVol = new Map();
+  const weekdayVol = Array(7).fill(0);
+  const arrivalByDay = new Map();
+  let minDate = null, maxDate = null;
 
-        // --- احتفالات القصاصات ---
-        function fireConfetti() {
-            var duration = 3000;
-            var end = Date.now() + duration;
-            (function frame() {
-                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#4f46e5', '#db2777', '#0d9488'] });
-                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#4f46e5', '#db2777', '#0d9488'] });
-                if (Date.now() < end) requestAnimationFrame(frame);
-            }());
-        }
-    </script>
+  samples.forEach((info, sid) => {
+    if (info.orderDT) {
+      if (!minDate || info.orderDT < minDate) minDate = info.orderDT;
+      if (!maxDate || info.orderDT > maxDate) maxDate = info.orderDT;
+      const k = info.orderDT.toISOString().slice(0,10);
+      dailyVol.set(k, (dailyVol.get(k) || 0) + 1);
+      const dow = info.orderDT.getDay();
+      weekdayVol[dow]++;
+      if (info.arrival != null) {
+        if (!arrivalByDay.has(dow)) arrivalByDay.set(dow, []);
+        arrivalByDay.get(dow).push(info.arrival);
+      }
+    }
+    if (!phcMap.has(info.phc)) phcMap.set(info.phc, {
+      samples: new Set(), patients: new Set(), arrival: [], n:0, h:0, l:0, repeats: 0,
+    });
+    const p = phcMap.get(info.phc);
+    p.samples.add(sid);
+    if (info.pid) p.patients.add(info.pid);
+    if (info.arrival != null) p.arrival.push(info.arrival);
+  });
+
+  const patientTest = new Map();
+  let normalCnt = 0, highCnt = 0, lowCnt = 0;
+  rows.forEach(row => {
+    const sid = String(row[c.sample] || '').trim();
+    if (!sid || !samples.has(sid)) return;
+    const info = samples.get(sid);
+    const test = c.test ? String(row[c.test] || '').trim() : '';
+    const cl = classify(row[c.value], row[c.range]);
+    if (cl) {
+      if (cl === 'Normal') normalCnt++;
+      else if (cl === 'High') highCnt++;
+      else if (cl === 'Low') lowCnt++;
+      const p = phcMap.get(info.phc);
+      if (cl === 'Normal') p.n++;
+      else if (cl === 'High') p.h++;
+      else if (cl === 'Low') p.l++;
+    }
+    if (test && info.pid) {
+      const key = info.pid + '|' + test;
+      if (!patientTest.has(key)) patientTest.set(key, new Set());
+      patientTest.get(key).add(sid + '|' + info.phc);
+    }
+  });
+
+  let totalRepeats = 0;
+  patientTest.forEach(set => {
+    if (set.size < 2) return;
+    totalRepeats++;
+    const phcs = new Set([...set].map(s => s.split('|')[1]));
+    phcs.forEach(phc => { if (phcMap.has(phc)) phcMap.get(phc).repeats++; });
+  });
+
+  const phcArr = [...phcMap.entries()].map(([name, v]) => {
+    const arr = v.arrival;
+    const total = v.n + v.h + v.l;
+    return {
+      name, samples: v.samples.size, patients: v.patients.size,
+      arrivalCount: arr.length,
+      avg: arr.length ? avg(arr) : null,
+      median: arr.length ? median(arr) : null,
+      p90: arr.length ? percentile(arr, 0.9) : null,
+      worst: arr.length ? Math.max(...arr) : null,
+      within: arr.length ? arr.filter(t => t <= ARRIVAL_TARGET).length / arr.length * 100 : null,
+      overTarget: arr.filter(t => t > ARRIVAL_TARGET).length,
+      samplesPerPatient: v.patients.size > 0 ? v.samples.size / v.patients.size : 0,
+      n: v.n, h: v.h, l: v.l, total,
+      abPct: total > 0 ? ((v.h + v.l) / total * 100) : null,
+      repeats: v.repeats,
+    };
+  }).sort((a,b) => b.samples - a.samples);
+
+  const allArrival = [];
+  samples.forEach(v => { if (v.arrival != null) allArrival.push(v.arrival); });
+  const arrivalStats = {
+    count: allArrival.length,
+    avg: allArrival.length ? avg(allArrival) : 0,
+    median: median(allArrival),
+    p90: percentile(allArrival, 0.90),
+    within: allArrival.length ? allArrival.filter(t => t <= ARRIVAL_TARGET).length / allArrival.length * 100 : 0,
+    overTarget: allArrival.filter(t => t > ARRIVAL_TARGET).length,
+  };
+
+  const eligible = phcArr.filter(p => p.arrivalCount >= 20);
+  const tiers = {
+    excellent: eligible.filter(p => p.within >= 90),
+    good: eligible.filter(p => p.within >= 75 && p.within < 90),
+    fair: eligible.filter(p => p.within >= 50 && p.within < 75),
+    poor: eligible.filter(p => p.within < 50),
+  };
+
+  const dayMap = [6, 0, 1, 2, 3, 4, 5];
+  const dayLabels = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+  const weekdayOrdered = dayMap.map(i => weekdayVol[i]);
+  const arrivalByDayOrdered = dayMap.map(d => {
+    const arr = arrivalByDay.get(d) || [];
+    return {
+      count: arr.length,
+      avg: arr.length ? avg(arr) : 0,
+      compliance: arr.length ? arr.filter(t => t <= ARRIVAL_TARGET).length / arr.length * 100 : 0,
+    };
+  });
+  const dailyDates = [...dailyVol.keys()].sort();
+  const dailyVals = dailyDates.map(d => dailyVol.get(d));
+
+  return {
+    s: {
+      samples: samples.size,
+      patients: new Set([...samples.values()].filter(v => v.pid).map(v => v.pid)).size,
+      centers: phcMap.size,
+      arrivalStats,
+      periodStart: minDate ? minDate.toISOString().slice(0,10) : null,
+      periodEnd: maxDate ? maxDate.toISOString().slice(0,10) : null,
+      totalRepeats,
+    },
+    phc: phcArr, eligible, tiers,
+    dailyDates, dailyVals,
+    weekdayOrdered, dayLabels,
+    arrivalByDayOrdered,
+  };
+}
+
+function renderAll(a) {
+  Object.values(STATE.charts).forEach(c => { try { c?.destroy?.(); } catch(e) {} });
+  STATE.charts = {};
+  const s = a.s;
+  if (s.periodStart && s.periodEnd) document.getElementById('datePill').textContent = `${s.periodStart} → ${s.periodEnd}`;
+  document.getElementById('footerInfo').textContent = `الفترة: ${s.periodStart || '—'} → ${s.periodEnd || '—'}`;
+  document.getElementById('footerStats').textContent = `${fmt(s.samples)} عينة · ${s.centers} مركز`;
+  renderKpis(a);
+  renderHero(a);
+  renderTierList(a);
+  renderInsights(a);
+  renderPhcTable(a, 'all');
+  requestAnimationFrame(() => renderAllCharts(a));
+  attachSearches();
+  attachTabs();
+}
+
+function renderKpis(a) {
+  const s = a.s;
+  const ar = s.arrivalStats;
+  const cl = ar.within >= 90 ? 'var(--green)' : ar.within >= 75 ? 'var(--orange)' : 'var(--red)';
+  const dailyAvg = Math.round(avg(a.dailyVals));
+  const k = [
+    { c:'var(--purple)', l:'إجمالي العينات', v: fmt(s.samples), sub: `${fmt(s.patients)} مريض` },
+    { c:'var(--blue)', l:'المراكز', v: fmt(s.centers), sub: `${a.eligible.length} نشط` },
+    { c:'var(--green)', l:'متوسط يومي', v: fmt(dailyAvg), sub: 'عينة/يوم' },
+    { c: cl, l:'الالتزام', v: fmt1(ar.within)+'%', sub: `${fmt(ar.overTarget)} متأخرة` },
+  ];
+  document.getElementById('kpisMain').innerHTML = k.map(x => `
+    <div class="kpi" style="--c:${x.c}">
+      <div class="lbl">${x.l}</div>
+      <div class="val mono" style="color:${x.c}">${x.v}</div>
+      <div class="sub">${x.sub}</div>
+    </div>`).join('');
+}
+
+function renderHero(a) {
+  const ar = a.s.arrivalStats;
+  const cl = ar.within >= 90 ? 'var(--green)' : ar.within >= 75 ? 'var(--orange)' : 'var(--red)';
+  document.getElementById('heroBox').style.setProperty('--c', cl);
+  document.getElementById('heroBox').innerHTML = `
+    <h3>الالتزام بهدف وصول العينة (≤ ٤.٥ ساعة من السحب)</h3>
+    <div class="big-num" style="color:${cl}">${fmt1(ar.within)}%</div>
+    <div class="hero-prog"><div style="width:${Math.min(ar.within, 100)}%; background:${cl}"></div></div>
+    <div class="hero-sub">
+      <span>عينات <strong>${fmt(ar.count)}</strong></span>
+      <span>متأخرة <strong>${fmt(ar.overTarget)}</strong></span>
+      <span>متوسط <strong>${fmt2(ar.avg)}س</strong></span>
+      <span>P90 <strong>${fmt2(ar.p90)}س</strong></span>
+    </div>`;
+}
+
+function renderTierList(a) {
+  const tiers = [
+    { name:'A — ممتاز', desc:'≥ 90%', c:'var(--green)', list: a.tiers.excellent },
+    { name:'B — جيد', desc:'75-89%', c:'var(--blue)', list: a.tiers.good },
+    { name:'C — متوسط', desc:'50-74%', c:'var(--orange)', list: a.tiers.fair },
+    { name:'D — ضعيف', desc:'< 50%', c:'var(--red)', list: a.tiers.poor },
+  ];
+  document.getElementById('tierList').innerHTML = tiers.map(t => {
+    const list = [...t.list].sort((a,b) => b.within - a.within);
+    return `
+      <div class="tier" style="--c:${t.c}">
+        <div class="tier-h"><div class="name">${t.name}</div><div class="cnt">${list.length}</div></div>
+        <div class="tier-desc">${t.desc}</div>
+        <div class="tier-list">
+          ${list.length === 0 ? '<div style="color:var(--dim); font-size:10.5px">— لا يوجد —</div>' : list.map(p => `<div class="row"><span>${trunc(shortName(p.name), 20)}</span><span class="v">${fmt1(p.within)}%</span></div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderInsights(a) {
+  const ar = a.s.arrivalStats;
+  const ins = [];
+  ins.push({ c: ar.within >= 90 ? 'var(--green)' : 'var(--orange)', ic: ar.within >= 90 ? '✅' : '⚠', title:'الأداء العام', text:`${fmt1(ar.within)}% التزام بهدف ٤.٥ ساعة (${fmt(ar.overTarget)} عينة متأخرة).` });
+  const mostSamples = a.phc[0];
+  if (mostSamples) ins.push({ c:'var(--blue)', ic:'📈', title:'الأعلى نشاطاً', text:`${shortName(mostSamples.name)} — ${fmt(mostSamples.samples)} عينة (${fmt(mostSamples.patients)} مريض).` });
+  const worst = [...a.eligible].sort((x,y) => x.within - y.within)[0];
+  if (worst) ins.push({ c:'var(--red)', ic:'🚨', title:'الأقل التزاماً', text:`${shortName(worst.name)} — ${fmt1(worst.within)}% فقط (متوسط ${fmt2(worst.avg)}س).` });
+  const best = [...a.eligible].sort((x,y) => y.within - x.within)[0];
+  if (best) ins.push({ c:'var(--green)', ic:'⭐', title:'الأعلى التزاماً', text:`${shortName(best.name)} — ${fmt1(best.within)}% (متوسط ${fmt2(best.avg)}س).` });
+  const mostOver = [...a.eligible].sort((x,y) => y.overTarget - x.overTarget)[0];
+  if (mostOver) ins.push({ c:'var(--orange)', ic:'⏳', title:'الأكثر تأخراً', text:`${shortName(mostOver.name)} — ${fmt(mostOver.overTarget)} عينة تجاوزت ٤.٥ ساعة.` });
+  const highAb = [...a.eligible].filter(p => p.total >= 100).sort((x,y) => y.abPct - x.abPct)[0];
+  if (highAb) ins.push({ c:'var(--pink)', ic:'📊', title:'الأعلى في خارج المعدل', text:`${shortName(highAb.name)} — ${fmt1(highAb.abPct)}% من النتائج خارج المعدل.` });
+  const mostRep = [...a.phc].sort((x,y) => y.repeats - x.repeats)[0];
+  if (mostRep && mostRep.repeats > 0) ins.push({ c:'var(--yellow)', ic:'🔁', title:'الأكثر إعادة', text:`${shortName(mostRep.name)} — ${fmt(mostRep.repeats)} حالة إعادة سحب.` });
+  const busyIdx = a.weekdayOrdered.indexOf(Math.max(...a.weekdayOrdered));
+  ins.push({ c:'var(--purple)', ic:'📅', title:'أعلى أيام النشاط', text:`${a.dayLabels[busyIdx]} — ${fmt(a.weekdayOrdered[busyIdx])} عينة.` });
+  document.getElementById('insights').innerHTML = ins.map(i => `
+    <div class="insight" style="--c:${i.c}">
+      <div class="ic">${i.ic}</div>
+      <div><h5>${i.title}</h5><p>${i.text}</p></div>
+    </div>`).join('');
+}
+
+function gradH(ctx, c1, c2) { const g = ctx.chart.ctx.createLinearGradient(0, 0, 400, 0); g.addColorStop(0, c1); g.addColorStop(1, c2); return g; }
+function gradV(ctx, c1, c2) { const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 240); g.addColorStop(0, c1); g.addColorStop(1, c2); return g; }
+function hBarOpts(suffix='') {
+  return {
+    indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7, callbacks: { label: c => c.parsed.x.toFixed(2) + suffix } } },
+    scales: { x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} }, y: { grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} } }
+  };
+}
+function vBarOpts(suffix='') {
+  return {
+    plugins: { legend: { display: false }, tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7, callbacks: { label: c => c.parsed.y.toFixed(0) + suffix } } },
+    scales: { x: { grid:{display:false}, ticks:{font:{size:9.5}} }, y: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:10}} } }
+  };
+}
+
+function renderAllCharts(a) {
+  const eligible = a.eligible;
+
+  STATE.charts.daily = new Chart(document.getElementById('dailyVolChart'), {
+    type: 'bar',
+    data: { labels: a.dailyDates.map(d => d.slice(5)), datasets: [{ data: a.dailyVals, backgroundColor: ctx => gradV(ctx, 'rgba(139,124,229,0.9)', 'rgba(139,124,229,0.2)'), borderRadius: 6, maxBarThickness: 42 }] },
+    options: vBarOpts(' عينة')
+  });
+  document.getElementById('mAvgDaily').textContent = fmt(Math.round(avg(a.dailyVals)));
+  document.getElementById('mMaxDaily').textContent = fmt(Math.max(...a.dailyVals));
+  document.getElementById('mMinDaily').textContent = fmt(Math.min(...a.dailyVals));
+
+  const topSamples = a.phc.slice(0, 15);
+  STATE.charts.topPhc = new Chart(document.getElementById('topPhcChart'), {
+    type: 'bar',
+    data: { labels: topSamples.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: topSamples.map(p => p.samples), backgroundColor: ctx => gradH(ctx, 'rgba(110,196,247,0.95)', 'rgba(110,196,247,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' عينة')
+  });
+
+  const topPats = [...a.phc].sort((x,y) => y.patients - x.patients).slice(0, 15);
+  STATE.charts.topPats = new Chart(document.getElementById('topPatientsChart'), {
+    type: 'bar',
+    data: { labels: topPats.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: topPats.map(p => p.patients), backgroundColor: ctx => gradH(ctx, 'rgba(182,167,240,0.95)', 'rgba(182,167,240,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' مريض')
+  });
+
+  const spp = [...a.phc].filter(p => p.patients >= 20).sort((x,y) => y.samplesPerPatient - x.samplesPerPatient).slice(0, 15);
+  STATE.charts.spp = new Chart(document.getElementById('samplesPerPatientChart'), {
+    type: 'bar',
+    data: { labels: spp.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: spp.map(p => p.samplesPerPatient), backgroundColor: ctx => gradH(ctx, 'rgba(126,224,184,0.95)', 'rgba(126,224,184,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' عينة/مريض')
+  });
+
+  const arrTop = a.phc.slice(0, 15);
+  STATE.charts.arrCombo = new Chart(document.getElementById('arrivalComboChart'), {
+    type: 'bar',
+    data: {
+      labels: arrTop.map(p => trunc(shortName(p.name), 22)),
+      datasets: [
+        { label: 'متوسط الوصول (س)', data: arrTop.map(p => p.avg), backgroundColor: arrTop.map(p => p.avg > 4.5 ? C.red : p.avg > 3.5 ? C.orange : C.green), borderRadius: 3, maxBarThickness: 12, xAxisID: 'x' },
+        { label: 'الالتزام %', data: arrTop.map(p => p.within), type: 'line', borderColor: C.purpleLight, backgroundColor: 'rgba(182,167,240,0.1)', tension: 0.3, borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, xAxisID: 'x2' },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 10, boxHeight: 10, padding: 8 } }, tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7 } },
+      scales: {
+        x: { position:'top', grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'س'} },
+        x2: { position:'bottom', grid:{display:false}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'}, max: 100 },
+        y: { grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} }
+      }
+    }
+  });
+
+  const worstComp = [...eligible].sort((x,y) => x.within - y.within).slice(0, 15);
+  STATE.charts.worstComp = new Chart(document.getElementById('worstComplianceChart'), {
+    type: 'bar',
+    data: { labels: worstComp.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: worstComp.map(p => p.within), backgroundColor: worstComp.map(p => p.within >= 75 ? C.orange : C.red), borderRadius: 4, maxBarThickness: 14 }] },
+    options: { ...hBarOpts('%'), scales: { ...hBarOpts().scales, x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'}, max: 100 } } }
+  });
+
+  const bestComp = [...eligible].sort((x,y) => y.within - x.within).slice(0, 15);
+  STATE.charts.bestComp = new Chart(document.getElementById('bestComplianceChart'), {
+    type: 'bar',
+    data: { labels: bestComp.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: bestComp.map(p => p.within), backgroundColor: ctx => gradH(ctx, 'rgba(126,224,184,0.95)', 'rgba(126,224,184,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: { ...hBarOpts('%'), scales: { ...hBarOpts().scales, x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'}, max: 100 } } }
+  });
+
+  const overTarget = [...eligible].sort((x,y) => y.overTarget - x.overTarget).slice(0, 15);
+  STATE.charts.overTarget = new Chart(document.getElementById('overTargetChart'), {
+    type: 'bar',
+    data: { labels: overTarget.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: overTarget.map(p => p.overTarget), backgroundColor: ctx => gradH(ctx, 'rgba(255,176,102,0.95)', 'rgba(255,176,102,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' عينة')
+  });
+
+  const p90Sorted = [...eligible].sort((x,y) => y.p90 - x.p90).slice(0, 15);
+  STATE.charts.p90 = new Chart(document.getElementById('p90Chart'), {
+    type: 'bar',
+    data: { labels: p90Sorted.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: p90Sorted.map(p => p.p90), backgroundColor: ctx => gradH(ctx, 'rgba(110,196,247,0.95)', 'rgba(110,196,247,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' س')
+  });
+
+  const worstCase = [...eligible].sort((x,y) => y.worst - x.worst).slice(0, 15);
+  STATE.charts.worstCase = new Chart(document.getElementById('worstCaseChart'), {
+    type: 'bar',
+    data: { labels: worstCase.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: worstCase.map(p => p.worst), backgroundColor: ctx => gradH(ctx, 'rgba(245,163,199,0.95)', 'rgba(245,163,199,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' س')
+  });
+
+  const buckets = {
+    '≥90%': eligible.filter(p => p.within >= 90).length,
+    '75-89%': eligible.filter(p => p.within >= 75 && p.within < 90).length,
+    '50-74%': eligible.filter(p => p.within >= 50 && p.within < 75).length,
+    '<50%': eligible.filter(p => p.within < 50).length,
+  };
+  STATE.charts.phcComp = new Chart(document.getElementById('phcComplianceChart'), {
+    type: 'bar',
+    data: { labels: Object.keys(buckets), datasets: [{ data: Object.values(buckets), backgroundColor: [C.green, C.blue, C.orange, C.red], borderRadius: 5, maxBarThickness: 50 }] },
+    options: vBarOpts(' مركز')
+  });
+
+  STATE.charts.weekdayVol = new Chart(document.getElementById('weekdayVolChart'), {
+    type: 'bar',
+    data: { labels: a.dayLabels, datasets: [{ data: a.weekdayOrdered, backgroundColor: a.weekdayOrdered.map(v => { const mx = Math.max(...a.weekdayOrdered); const p = mx > 0 ? v / mx : 0; if (p > 0.8) return C.purple; if (p > 0.4) return C.blue; return C.orange; }), borderRadius: 6, maxBarThickness: 30 }] },
+    options: vBarOpts(' عينة')
+  });
+  const busyIdx = a.weekdayOrdered.indexOf(Math.max(...a.weekdayOrdered));
+  const nz = a.weekdayOrdered.filter(v => v > 0);
+  const quietVal = nz.length ? Math.min(...nz) : 0;
+  const quietIdx = a.weekdayOrdered.indexOf(quietVal);
+  document.getElementById('mBusyDay').textContent = a.dayLabels[busyIdx];
+  document.getElementById('mQuietDay').textContent = quietVal > 0 ? a.dayLabels[quietIdx] : '—';
+
+  STATE.charts.arrByDay = new Chart(document.getElementById('arrivalByDayChart'), {
+    type: 'bar',
+    data: {
+      labels: a.dayLabels,
+      datasets: [
+        { label: 'متوسط الوصول (س)', data: a.arrivalByDayOrdered.map(d => d.count > 0 ? d.avg : null), backgroundColor: a.arrivalByDayOrdered.map(d => d.avg > 4.5 ? C.red : d.avg > 3.5 ? C.orange : C.green), borderRadius: 4, maxBarThickness: 28, yAxisID: 'y' },
+        { label: 'الالتزام %', data: a.arrivalByDayOrdered.map(d => d.compliance), type: 'line', borderColor: C.purpleLight, backgroundColor: 'rgba(182,167,240,0.1)', tension: 0.4, borderWidth: 2, pointRadius: 3, yAxisID: 'y1' },
+      ]
+    },
+    options: {
+      plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 10, boxHeight: 10, padding: 8 } }, tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7 } },
+      scales: {
+        x: { grid:{display:false}, ticks:{font:{size:10}} },
+        y: { position:'left', grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:10}, callback: v => v+'س'} },
+        y1: { position:'right', grid:{display:false}, ticks:{font:{family:'JetBrains Mono', size:10}, callback: v => v+'%'}, max: 100, min: 0 }
+      }
+    }
+  });
+
+  const topByResults = [...a.phc].filter(p => p.total > 0).sort((x,y) => y.total - x.total).slice(0, 15);
+  STATE.charts.resultsByPhc = new Chart(document.getElementById('resultsByPhcChart'), {
+    type: 'bar',
+    data: {
+      labels: topByResults.map(p => trunc(shortName(p.name), 22)),
+      datasets: [
+        { label:'طبيعي', data: topByResults.map(p => p.n), backgroundColor: C.green, borderRadius: 2 },
+        { label:'مرتفع', data: topByResults.map(p => p.h), backgroundColor: C.red, borderRadius: 2 },
+        { label:'منخفض', data: topByResults.map(p => p.l), backgroundColor: C.orange, borderRadius: 2 },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 9, boxHeight: 9, padding: 6 } }, tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7 } },
+      scales: { x: { stacked: true, grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} }, y: { stacked: true, grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} } }
+    }
+  });
+
+  const abRanked = [...a.phc].filter(p => p.abPct != null && p.total >= 100).sort((x,y) => y.abPct - x.abPct).slice(0, 15);
+  STATE.charts.abByPhc = new Chart(document.getElementById('abByPhcChart'), {
+    type: 'bar',
+    data: { labels: abRanked.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: abRanked.map(p => p.abPct), backgroundColor: abRanked.map(p => p.abPct > 30 ? C.red : p.abPct > 20 ? C.orange : C.blue), borderRadius: 4, maxBarThickness: 14 }] },
+    options: { ...hBarOpts('%'), scales: { ...hBarOpts().scales, x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+  });
+
+  const repsRanked = [...a.phc].filter(p => p.repeats > 0).sort((x,y) => y.repeats - x.repeats).slice(0, 15);
+  STATE.charts.repByPhc = new Chart(document.getElementById('repByPhcChart'), {
+    type: 'bar',
+    data: { labels: repsRanked.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: repsRanked.map(p => p.repeats), backgroundColor: ctx => gradH(ctx, 'rgba(245,163,199,0.95)', 'rgba(245,163,199,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
+    options: hBarOpts(' حالة')
+  });
+}
+
+function renderPhcTable(a, filter) {
+  let arr = a.phc;
+  if (filter === 'bad') arr = arr.filter(p => p.within != null && p.within < 70 && p.arrivalCount >= 20);
+  else if (filter === 'warn') arr = arr.filter(p => p.within != null && p.within >= 70 && p.within < 85 && p.arrivalCount >= 20);
+  else if (filter === 'good') arr = arr.filter(p => p.within != null && p.within >= 85 && p.arrivalCount >= 20);
+  arr = arr.slice().sort((x,y) => {
+    if (x.within == null && y.within == null) return y.samples - x.samples;
+    if (x.within == null) return 1;
+    if (y.within == null) return -1;
+    return x.within - y.within;
+  });
+  document.getElementById('phcCount').textContent = `${arr.length} / ${a.phc.length}`;
+  const maxSamples = a.phc[0]?.samples || 1;
+  document.querySelector('#phcTable tbody').innerHTML = arr.map((r, i) => {
+    const wCls = r.within == null ? 't-na' : r.within >= 85 ? 't-good' : r.within >= 70 ? 't-warn' : 't-bad';
+    const avgCls = r.avg == null ? 't-na' : r.avg <= 3 ? 't-good' : r.avg <= 4.5 ? 't-warn' : 't-bad';
+    const abCls = r.abPct == null ? 't-na' : r.abPct > 30 ? 't-bad' : r.abPct > 15 ? 't-warn' : 't-good';
+    const rating = r.within == null ? '—' : r.within >= 95 ? '★★★★★' : r.within >= 85 ? '★★★★' : r.within >= 70 ? '★★★' : r.within >= 50 ? '★★' : '★';
+    return `
+      <tr data-name="${r.name.toLowerCase()}">
+        <td class="num">${i+1}</td>
+        <td>${shortName(r.name)}</td>
+        <td class="num bar-c"><div class="bg" style="width:${(r.samples/maxSamples)*100}%"></div><span>${fmt(r.samples)}</span></td>
+        <td class="num">${fmt(r.patients)}</td>
+        <td class="num ${wCls}">${r.within == null ? '—' : fmt1(r.within)+'%'}</td>
+        <td class="num ${avgCls}">${r.avg == null ? '—' : fmt2(r.avg)+'س'}</td>
+        <td class="num">${r.median == null ? '—' : fmt2(r.median)+'س'}</td>
+        <td class="num">${r.p90 == null ? '—' : fmt2(r.p90)+'س'}</td>
+        <td class="num ${r.worst > 24 ? 't-bad' : r.worst > 8 ? 't-warn' : ''}">${r.worst == null ? '—' : fmt2(r.worst)+'س'}</td>
+        <td class="num ${r.overTarget > 50 ? 't-bad' : r.overTarget > 20 ? 't-warn' : ''}">${fmt(r.overTarget)}</td>
+        <td class="num t-n">${fmt(r.n)}</td>
+        <td class="num t-h">${fmt(r.h)}</td>
+        <td class="num t-l">${fmt(r.l)}</td>
+        <td class="num ${abCls}">${r.abPct == null ? '—' : fmt1(r.abPct)+'%'}</td>
+        <td class="num">${fmt(r.repeats)}</td>
+        <td class="rating">${rating}</td>
+      </tr>`;
+  }).join('');
+}
+
+function attachSearches() {
+  const inp = document.getElementById('phcSearch');
+  if (inp) {
+    inp.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('#phcTable tbody tr').forEach(tr => {
+        tr.style.display = tr.dataset.name && tr.dataset.name.includes(q) ? '' : 'none';
+      });
+    });
+  }
+}
+function attachTabs() {
+  document.querySelectorAll('#phcTabs .tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('#phcTabs .tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      renderPhcTable(STATE.an, t.dataset.f);
+    };
+  });
+}
+
+document.getElementById('reloadBtn').addEventListener('click', () => {
+  document.getElementById('upload-section').classList.remove('hide');
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('reloadBtn').style.display = 'none';
+  document.getElementById('exportWrap').style.display = 'none';
+  statusEl.classList.remove('show');
+  progressEl.style.display = 'none';
+  progressBar.style.width = '0%';
+  fileInput.value = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+const pdfBtn = document.getElementById('pdfBtn');
+const exportMenu = document.getElementById('exportMenu');
+pdfBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  exportMenu.classList.toggle('show');
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.export-wrap')) exportMenu.classList.remove('show');
+});
+document.querySelectorAll('.export-opt').forEach(opt => {
+  opt.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    exportMenu.classList.remove('show');
+    await exportPdf(opt.dataset.mode);
+  });
+});
+
+async function exportPdf(mode = 'mobile') {
+  const orig = pdfBtn.innerHTML;
+  pdfBtn.disabled = true;
+  pdfBtn.innerHTML = '<span class="spinner"></span> جاري…';
+  const isDesktop = mode === 'desktop';
+
+  if (isDesktop) {
+    document.body.classList.add('pdf-desktop');
+    await new Promise(r => setTimeout(r, 200));
+    Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = isDesktop ? new jsPDF('l', 'mm', 'a4') : new jsPDF('p', 'mm', 'a4');
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const M = isDesktop ? 8 : 6;
+    const s = STATE.an.s;
+
+    pdf.setFillColor(10, 14, 26);
+    pdf.rect(0, 0, W, H, 'F');
+    pdf.setTextColor(139, 124, 229);
+    pdf.setFontSize(isDesktop ? 10 : 8);
+    pdf.text('UNIFIED LAB CENTER', M, 18);
+    pdf.setTextColor(231, 236, 247);
+    pdf.setFontSize(isDesktop ? 24 : 18);
+    pdf.text('Centers Comparison Report', M, isDesktop ? 40 : 34);
+    pdf.setFontSize(isDesktop ? 13 : 11);
+    pdf.setTextColor(136, 147, 179);
+    pdf.text(`Period: ${s.periodStart} to ${s.periodEnd}`, M, isDesktop ? 54 : 44);
+    pdf.text(`${s.samples.toLocaleString()} samples | ${s.centers} centers`, M, isDesktop ? 64 : 52);
+    pdf.text(`SLA compliance: ${s.arrivalStats.within.toFixed(1)}%`, M, isDesktop ? 74 : 60);
+    pdf.setFontSize(isDesktop ? 11 : 9);
+    pdf.text(`Format: ${isDesktop ? 'Desktop (A4 landscape)' : 'Mobile (A4 portrait)'}`, M, isDesktop ? 84 : 68);
+
+    const app = document.getElementById('app');
+    const origs = [];
+    app.querySelectorAll('.table-scroll').forEach(t => {
+      origs.push({ el:t, mH:t.style.maxHeight, oY:t.style.overflowY });
+      t.style.maxHeight = 'none'; t.style.overflowY = 'visible';
+    });
+
+    try {
+      const canvas = await html2canvas(app, { backgroundColor: '#0a0e1a', scale: 1.5, useCORS: true, windowWidth: app.scrollWidth });
+      const iW = W - 2*M;
+      const pxMm = canvas.width / iW;
+      const pH = (H - 16) * pxMm;
+      let yOff = 0;
+      while (yOff < canvas.height) {
+        const pHc = Math.min(pH, canvas.height - yOff);
+        const pc = document.createElement('canvas');
+        pc.width = canvas.width; pc.height = pHc;
+        const ctx = pc.getContext('2d');
+        ctx.fillStyle = '#0a0e1a'; ctx.fillRect(0, 0, pc.width, pc.height);
+        ctx.drawImage(canvas, 0, -yOff);
+        pdf.addPage();
+        pdf.setFillColor(10, 14, 26); pdf.rect(0, 0, W, H, 'F');
+        pdf.addImage(pc.toDataURL('image/jpeg', 0.85), 'JPEG', M, 8, iW, pHc / pxMm);
+        yOff += pHc;
+      }
+    } finally {
+      origs.forEach(o => { o.el.style.maxHeight = o.mH; o.el.style.overflowY = o.oY; });
+    }
+
+    const fname = `Lab_Centers_${isDesktop ? 'Desktop' : 'Mobile'}_${s.periodStart}.pdf`;
+    pdf.save(fname);
+  } catch(err) {
+    console.error(err);
+    alert('فشل تصدير PDF: ' + err.message);
+  } finally {
+    if (isDesktop) {
+      document.body.classList.remove('pdf-desktop');
+      await new Promise(r => setTimeout(r, 200));
+      Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
+    }
+    pdfBtn.disabled = false;
+    pdfBtn.innerHTML = orig;
+  }
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
+  }, 250);
+});
+</script>
 </body>
 </html>
-
-
-```
