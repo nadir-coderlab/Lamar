@@ -1375,7 +1375,8 @@ document.querySelectorAll('.export-opt').forEach(opt => {
   });
 });
 
-// PDF: capture the whole app as one tall image, then slice it into pages with NO gaps
+// PDF: capture each block separately (iOS Safari has a max canvas size),
+// then place them back-to-back with NO gaps to look continuous.
 async function exportPdf(mode = 'mobile') {
   const orig = pdfBtn.innerHTML;
   pdfBtn.disabled = true;
@@ -1407,43 +1408,95 @@ async function exportPdf(mode = 'mobile') {
     });
 
     try {
-      // Capture entire app as ONE long canvas
-      const canvas = await html2canvas(app, {
-        backgroundColor: '#0a0e1a',
-        scale: isDesktop ? 1.5 : 2,
-        useCORS: true,
-        windowWidth: app.scrollWidth,
-        logging: false,
-      });
+      // Get top-level blocks
+      const blocks = Array.from(app.children).filter(b => b && b.offsetHeight > 0);
 
-      // pixel-to-mm ratio (canvas is rendered to fit page width)
-      const pxPerMm = canvas.width / pageW;
-      // page height in canvas pixels
-      const pagePxH = pageH * pxPerMm;
+      // Reference width for pixel-to-mm ratio: use app width
+      const refWidthPx = app.scrollWidth;
+      const scale = isDesktop ? 1.3 : 1.8; // smaller scale = smaller canvases (iOS-safe)
+      const refWidthCanvas = refWidthPx * scale;
+      const pxPerMm = refWidthCanvas / pageW;
+      const pagePxH = pageH * pxPerMm; // page height in canvas pixels
 
-      let yOff = 0;
-      let isFirst = true;
-      while (yOff < canvas.height) {
-        const sliceH = Math.min(pagePxH, canvas.height - yOff);
-        // create a slice canvas
-        const slice = document.createElement('canvas');
-        slice.width = canvas.width;
-        slice.height = sliceH;
-        const ctx = slice.getContext('2d');
-        ctx.fillStyle = '#0a0e1a';
-        ctx.fillRect(0, 0, slice.width, slice.height);
-        ctx.drawImage(canvas, 0, -yOff);
+      // Capture all blocks first, store their image data + heights in canvas-px
+      const imgs = [];
+      for (const block of blocks) {
+        try {
+          const c = await html2canvas(block, {
+            backgroundColor: '#0a0e1a',
+            scale: scale,
+            useCORS: true,
+            windowWidth: refWidthPx,
+            logging: false,
+          });
+          // Convert to JPEG once and discard canvas
+          const dataUrl = c.toDataURL('image/jpeg', 0.82);
+          imgs.push({ dataUrl, w: c.width, h: c.height });
+        } catch (err) {
+          console.warn('skip block', err);
+        }
+      }
 
-        if (!isFirst) pdf.addPage();
-        else isFirst = false;
+      // Now lay them out: stack vertically on pages with NO gap.
+      // If a block doesn't fit fully on current page, split it across pages (continuous, no gap).
+      let pageOffsetPx = 0; // how far down current page we've filled (in canvas px)
+      let isFirstPage = true;
 
+      const newPage = () => {
+        if (!isFirstPage) pdf.addPage();
+        isFirstPage = false;
         pdf.setFillColor(10, 14, 26);
         pdf.rect(0, 0, pageW, pageH, 'F');
-        // place image at top-left, full width, exact slice height
-        const sliceMm = sliceH / pxPerMm;
-        pdf.addImage(slice.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pageW, sliceMm);
+        pageOffsetPx = 0;
+      };
+      newPage();
 
-        yOff += sliceH;
+      for (const img of imgs) {
+        let remainingH = img.h;
+        let srcY = 0;
+        while (remainingH > 0) {
+          const spaceOnPagePx = pagePxH - pageOffsetPx;
+          if (spaceOnPagePx <= 1) {
+            // page full
+            newPage();
+            continue;
+          }
+          const takeH = Math.min(remainingH, spaceOnPagePx);
+          // We need to draw img[srcY .. srcY+takeH] at pageOffsetPx
+          // jsPDF addImage doesn't crop directly, so we must crop via a small canvas
+          // BUT to avoid iOS limits, the crop is just a slice of one block (small)
+          if (takeH >= remainingH && srcY === 0) {
+            // simple case: place whole image directly (no crop)
+            const drawMm = img.h / pxPerMm;
+            const yMm = pageOffsetPx / pxPerMm;
+            pdf.addImage(img.dataUrl, 'JPEG', 0, yMm, pageW, drawMm);
+            pageOffsetPx += img.h;
+            remainingH = 0;
+          } else {
+            // need to crop part of image
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = img.w;
+            cropCanvas.height = takeH;
+            const ctx = cropCanvas.getContext('2d');
+            ctx.fillStyle = '#0a0e1a';
+            ctx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
+            // Draw from image
+            const tmpImg = new Image();
+            tmpImg.src = img.dataUrl;
+            await new Promise(res => { if (tmpImg.complete) res(); else tmpImg.onload = res; });
+            ctx.drawImage(tmpImg, 0, -srcY);
+            const cropUrl = cropCanvas.toDataURL('image/jpeg', 0.82);
+            const drawMm = takeH / pxPerMm;
+            const yMm = pageOffsetPx / pxPerMm;
+            pdf.addImage(cropUrl, 'JPEG', 0, yMm, pageW, drawMm);
+            pageOffsetPx += takeH;
+            srcY += takeH;
+            remainingH -= takeH;
+            if (remainingH > 0) {
+              newPage();
+            }
+          }
+        }
       }
     } finally {
       origs.forEach(o => { o.el.style.maxHeight = o.mH; o.el.style.overflowY = o.oY; });
