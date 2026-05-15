@@ -299,7 +299,7 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h3>أعلى المراكز في نسبة العينات المفقودة</h3><p>نسبة العينات غير المُرسلة من إجمالي عينات كل مركز</p>
+      <div class="card-head"><h3>أعلى المراكز في نسبة العينات المفقودة</h3><p>نسبة عينات المركز المفقودة من إجمالي عمل المختبر</p>
       </div>
       <div class="chart-box xtall"><canvas id="lostByPctChart"></canvas></div>
     </div>
@@ -340,7 +340,7 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h3>أعلى المراكز في نسبة الرفض</h3><p>نسبة المرفوضة من إجمالي عينات المركز</p></div>
+      <div class="card-head"><h3>أعلى المراكز في نسبة الرفض</h3><p>نسبة عينات المركز المرفوضة من إجمالي عمل المختبر</p></div>
       <div class="chart-box xtall"><canvas id="rejByPctChart"></canvas></div>
     </div>
 
@@ -993,6 +993,14 @@ function analyze(rows) {
     };
   }).sort((a,b) => b.samples - a.samples);
 
+  // Calculate lab-wide totals for "% of total" metrics
+  const labTotalSamples = phcArr.reduce((s, p) => s + p.samples, 0);
+  const labTotalIncLost = phcArr.reduce((s, p) => s + p.totalIncLost, 0);
+  phcArr.forEach(p => {
+    p.lostPctOfTotal = labTotalIncLost > 0 ? (p.lost / labTotalIncLost * 100) : 0;
+    p.rejPctOfTotal = labTotalSamples > 0 ? (p.rej / labTotalSamples * 100) : 0;
+  });
+
   // Tests array
   const testsArr = [...testsMap.entries()].map(([name, v]) => {
     const total = v.n + v.h + v.l;
@@ -1609,14 +1617,14 @@ function renderAllCharts(a) {
       options: hBarOpts(' عينة')
     });
   }
-  // by pct
-  const lostByPct = [...lostPhcs].filter(p => p.totalIncLost >= 50).sort((x,y) => y.lostPct - x.lostPct).slice(0, 15);
+  // by pct of total lab work
+  const lostByPct = [...lostPhcs].sort((x,y) => y.lostPctOfTotal - x.lostPctOfTotal).slice(0, 15);
   if (document.getElementById('lostByPctChart')) {
     STATE.charts.lostByPct = new Chart(document.getElementById('lostByPctChart'), {
       type: 'bar',
       data: { labels: lostByPct.map(p => trunc(shortName(p.name), 22)),
-        datasets: [{ data: lostByPct.map(p => p.lostPct),
-          backgroundColor: lostByPct.map(p => p.lostPct >= 30 ? C.red : p.lostPct >= 15 ? C.orange : C.yellow),
+        datasets: [{ data: lostByPct.map(p => p.lostPctOfTotal),
+          backgroundColor: lostByPct.map(p => p.lostPctOfTotal >= 5 ? C.red : p.lostPctOfTotal >= 2 ? C.orange : C.yellow),
           borderRadius: 4, maxBarThickness: 14 }] },
       options: { ...hBarOpts('%'),
         scales: { ...hBarOpts().scales,
@@ -1669,14 +1677,14 @@ function renderAllCharts(a) {
       options: hBarOpts(' عينة')
     });
   }
-  // by pct
-  const rejByPct = [...rejPhcs].filter(p => p.samples >= 50).sort((x,y) => y.rejPct - x.rejPct).slice(0, 15);
+  // by pct of total lab work
+  const rejByPct = [...rejPhcs].sort((x,y) => y.rejPctOfTotal - x.rejPctOfTotal).slice(0, 15);
   if (document.getElementById('rejByPctChart')) {
     STATE.charts.rejByPct = new Chart(document.getElementById('rejByPctChart'), {
       type: 'bar',
       data: { labels: rejByPct.map(p => trunc(shortName(p.name), 22)),
-        datasets: [{ data: rejByPct.map(p => p.rejPct),
-          backgroundColor: rejByPct.map(p => p.rejPct >= 5 ? C.red : p.rejPct >= 2 ? C.orange : C.yellow),
+        datasets: [{ data: rejByPct.map(p => p.rejPctOfTotal),
+          backgroundColor: rejByPct.map(p => p.rejPctOfTotal >= 2 ? C.red : p.rejPctOfTotal >= 1 ? C.orange : C.yellow),
           borderRadius: 4, maxBarThickness: 14 }] },
       options: { ...hBarOpts('%'),
         scales: { ...hBarOpts().scales,
@@ -1936,57 +1944,99 @@ async function exportPdf(mode = 'mobile') {
       const pxPerMm = imgs[0] ? (imgs[0].w / pageW_mm) : (scale * 3.78);
 
       const HEADER_HEIGHT_MM = isDesktop ? 38 : 42; // tall header
-      const totalContentPx = imgs.reduce((a, im) => a + im.h, 0);
-      const totalContentMm = totalContentPx / pxPerMm;
-      const pageH_mm = HEADER_HEIGHT_MM + totalContentMm + 12; // bottom padding
+      // jsPDF has a max height limit (~14400pt ≈ 5080mm). Keep pages safely under that.
+      const MAX_PAGE_HEIGHT_MM = 4800;
+
+      // Compute each block's height in mm
+      const blockHeightsMm = imgs.map(im => im.h / pxPerMm);
+      const totalContentMm = blockHeightsMm.reduce((a,b) => a+b, 0);
+      const totalNeededMm = HEADER_HEIGHT_MM + totalContentMm + 12;
+
+      // Determine page count and where to split
+      // Each page can hold (MAX - HEADER) mm of content (first page) or MAX mm (subsequent)
+      const pageBreaks = []; // index of first block on each new page (excluding page 0)
+      let runningMm = HEADER_HEIGHT_MM; // start with header on first page
+      const firstPageMax = MAX_PAGE_HEIGHT_MM - 12;
+      const otherPageMax = MAX_PAGE_HEIGHT_MM - 12;
+      let currentPageMax = firstPageMax;
+      for (let i = 0; i < blockHeightsMm.length; i++) {
+        const h = blockHeightsMm[i];
+        // Would adding this block exceed current page max?
+        if (runningMm + h > currentPageMax && i > 0) {
+          pageBreaks.push(i);
+          runningMm = 0; // new page, no header
+          currentPageMax = otherPageMax;
+        }
+        runningMm += h;
+      }
+
+      // Build list of page content groups
+      const pages = [];
+      let start = 0;
+      for (const brk of pageBreaks) {
+        pages.push({ start, end: brk });
+        start = brk;
+      }
+      pages.push({ start, end: blockHeightsMm.length });
+
+      // Create the PDF with first page dimensions
+      const firstPageContentMm = blockHeightsMm.slice(pages[0].start, pages[0].end).reduce((a,b) => a+b, 0);
+      const firstPageH_mm = Math.min(MAX_PAGE_HEIGHT_MM, HEADER_HEIGHT_MM + firstPageContentMm + 12);
 
       // Create PDF with custom long page size
       pdf = new jsPDF({
         orientation: isDesktop ? 'l' : 'p',
         unit: 'mm',
-        format: [pageW_mm, pageH_mm],
+        format: [pageW_mm, firstPageH_mm],
         compress: true,
       });
 
-      // Background
-      pdf.setFillColor(10, 14, 26);
-      pdf.rect(0, 0, pageW_mm, pageH_mm, 'F');
+      // Render each page
+      for (let pi = 0; pi < pages.length; pi++) {
+        const page = pages[pi];
+        const contentMm = blockHeightsMm.slice(page.start, page.end).reduce((a,b) => a+b, 0);
+        const hasHeader = pi === 0;
+        const thisPageH_mm = Math.min(MAX_PAGE_HEIGHT_MM, (hasHeader ? HEADER_HEIGHT_MM : 0) + contentMm + 12);
 
-      // HEADER — large and prominent
-      // Gradient-ish look using two rects
-      pdf.setFillColor(28, 35, 64); // surface-2
-      pdf.rect(0, 0, pageW_mm, HEADER_HEIGHT_MM, 'F');
-      // Accent bar at top
-      pdf.setFillColor(139, 124, 229); // purple
-      pdf.rect(0, 0, pageW_mm, 1.2, 'F');
-      // Bottom border
-      pdf.setDrawColor(45, 55, 89);
-      pdf.setLineWidth(0.3);
-      pdf.line(0, HEADER_HEIGHT_MM, pageW_mm, HEADER_HEIGHT_MM);
+        if (pi > 0) {
+          pdf.addPage([pageW_mm, thisPageH_mm], isDesktop ? 'l' : 'p');
+        }
 
-      // Title — large
-      pdf.setTextColor(231, 236, 247);
-      pdf.setFontSize(isDesktop ? 22 : 18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Lab Centers Performance Report', pageW_mm / 2, isDesktop ? 18 : 20, { align: 'center' });
+        // Background
+        pdf.setFillColor(10, 14, 26);
+        pdf.rect(0, 0, pageW_mm, thisPageH_mm, 'F');
 
-      // Subtitle line
-      pdf.setFontSize(isDesktop ? 11 : 10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(182, 167, 240); // purple-light
-      pdf.text('Unified Lab Center  —  Comprehensive Indicators', pageW_mm / 2, isDesktop ? 26 : 28, { align: 'center' });
+        let yMm = 0;
+        if (hasHeader) {
+          // HEADER — large and prominent
+          pdf.setFillColor(28, 35, 64);
+          pdf.rect(0, 0, pageW_mm, HEADER_HEIGHT_MM, 'F');
+          pdf.setFillColor(139, 124, 229);
+          pdf.rect(0, 0, pageW_mm, 1.2, 'F');
+          pdf.setDrawColor(45, 55, 89);
+          pdf.setLineWidth(0.3);
+          pdf.line(0, HEADER_HEIGHT_MM, pageW_mm, HEADER_HEIGHT_MM);
+          pdf.setTextColor(231, 236, 247);
+          pdf.setFontSize(isDesktop ? 22 : 18);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('Lab Centers Performance Report', pageW_mm / 2, isDesktop ? 18 : 20, { align: 'center' });
+          pdf.setFontSize(isDesktop ? 11 : 10);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(182, 167, 240);
+          pdf.text('Unified Lab Center  —  Comprehensive Indicators', pageW_mm / 2, isDesktop ? 26 : 28, { align: 'center' });
+          pdf.setFontSize(isDesktop ? 10 : 9);
+          pdf.setTextColor(136, 147, 179);
+          pdf.text(`${s.periodStart}   to   ${s.periodEnd}      ${s.samples.toLocaleString()} samples      ${s.centers} centers      ${s.tests} tests`, pageW_mm / 2, isDesktop ? 33 : 36, { align: 'center' });
+          yMm = HEADER_HEIGHT_MM;
+        }
 
-      // Stats line
-      pdf.setFontSize(isDesktop ? 10 : 9);
-      pdf.setTextColor(136, 147, 179);
-      pdf.text(`${s.periodStart}   to   ${s.periodEnd}      ${s.samples.toLocaleString()} samples      ${s.centers} centers      ${s.tests} tests`, pageW_mm / 2, isDesktop ? 33 : 36, { align: 'center' });
-
-      // Place all images stacked back-to-back, no gaps
-      let yMm = HEADER_HEIGHT_MM;
-      for (const img of imgs) {
-        const hMm = img.h / pxPerMm;
-        pdf.addImage(img.dataUrl, 'JPEG', 0, yMm, pageW_mm, hMm);
-        yMm += hMm;
+        // Place images for this page
+        for (let i = page.start; i < page.end; i++) {
+          const img = imgs[i];
+          const hMm = blockHeightsMm[i];
+          pdf.addImage(img.dataUrl, 'JPEG', 0, yMm, pageW_mm, hMm);
+          yMm += hMm;
+        }
       }
     } finally {
       origs.forEach(o => { o.el.setAttribute('style', o.attrMH); });
