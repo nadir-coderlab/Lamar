@@ -294,11 +294,6 @@
     <div id="lostAlert"></div>
 
     <div class="card">
-      <div class="card-head"><h3>أعلى المراكز في العينات المفقودة (عدد)</h3><p>أعلى ١٥ مركز في عدد العينات التي لم تُرسل للمختبر</p></div>
-      <div class="chart-box xtall"><canvas id="lostByCountChart"></canvas></div>
-    </div>
-
-    <div class="card">
       <div class="card-head"><h3>أعلى المراكز في نسبة العينات المفقودة</h3><p>نسبة عينات المركز المفقودة من إجمالي عمل المختبر</p>
       </div>
       <div class="chart-box xtall"><canvas id="lostByPctChart"></canvas></div>
@@ -332,11 +327,6 @@
     <div class="card">
       <div class="card-head"><h3>أسباب الرفض</h3><p>توزيع العينات المرفوضة حسب السبب</p></div>
       <div class="chart-box"><canvas id="rejByCatChart"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h3>أعلى المراكز في عدد العينات المرفوضة</h3><p>أعلى ١٥ مركز</p></div>
-      <div class="chart-box xtall"><canvas id="rejByCountChart"></canvas></div>
     </div>
 
     <div class="card">
@@ -1605,18 +1595,6 @@ function renderAllCharts(a) {
 
   // ========== LOST SAMPLES CHARTS ==========
   const lostPhcs = [...a.phc].filter(p => p.lost > 0);
-  // by count
-  const lostByCount = [...lostPhcs].sort((x,y) => y.lost - x.lost).slice(0, 15);
-  if (document.getElementById('lostByCountChart')) {
-    STATE.charts.lostByCount = new Chart(document.getElementById('lostByCountChart'), {
-      type: 'bar',
-      data: { labels: lostByCount.map(p => trunc(shortName(p.name), 22)),
-        datasets: [{ data: lostByCount.map(p => p.lost),
-          backgroundColor: ctx => gradH(ctx, 'rgba(255,123,138,0.95)', 'rgba(255,123,138,0.3)'),
-          borderRadius: 4, maxBarThickness: 14 }] },
-      options: hBarOpts(' عينة')
-    });
-  }
   // by pct of total lab work
   const lostByPct = [...lostPhcs].sort((x,y) => y.lostPctOfTotal - x.lostPctOfTotal).slice(0, 15);
   if (document.getElementById('lostByPctChart')) {
@@ -1663,18 +1641,6 @@ function renderAllCharts(a) {
       options: { cutout:'60%',
         plugins: { legend: { position:'bottom', labels: { font: { size: 10.5 }, color: C.muted, boxWidth: 10, boxHeight: 10, padding: 8 } },
           tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmt(ctx.parsed)}` } } } }
-    });
-  }
-  // by count
-  const rejByCount = [...rejPhcs].sort((x,y) => y.rej - x.rej).slice(0, 15);
-  if (document.getElementById('rejByCountChart')) {
-    STATE.charts.rejByCount = new Chart(document.getElementById('rejByCountChart'), {
-      type: 'bar',
-      data: { labels: rejByCount.map(p => trunc(shortName(p.name), 22)),
-        datasets: [{ data: rejByCount.map(p => p.rej),
-          backgroundColor: ctx => gradH(ctx, 'rgba(245,163,199,0.95)', 'rgba(245,163,199,0.3)'),
-          borderRadius: 4, maxBarThickness: 14 }] },
-      options: hBarOpts(' عينة')
     });
   }
   // by pct of total lab work
