@@ -89,7 +89,7 @@
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
   .card-head { margin-bottom: 10px; }
   .card-head h3 { font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
-  .card-head p { font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+  .card-head p { font-size: 10.5px; color: var(--text); line-height: 1.5; opacity: 0.85; }
   .chart-box { position: relative; width: 100%; height: 240px; }
   .chart-box.tall { height: 320px; }
   .chart-box.xtall { height: 480px; }
@@ -192,6 +192,8 @@
   body.pdf-mode .shell { padding: 14px 12px !important; }
   body.pdf-mode .card { margin-bottom: 8px !important; }
   body.pdf-mode .section { margin: 12px 0 6px !important; }
+  body.pdf-mode .search { display: none !important; }
+  body.pdf-mode .tabs { display: none !important; }
   body.pdf-desktop .shell { max-width: 1080px !important; padding: 14px 16px !important; }
   body.pdf-desktop .chart-box { height: 320px !important; }
   body.pdf-desktop .chart-box.xtall { height: 480px !important; }
@@ -318,6 +320,46 @@
       </div></div>
     </div>
 
+    <!-- 3.6) العينات المرفوضة -->
+    <div class="section" style="--c: var(--orange)"><span class="bar"></span><h2>العينات المرفوضة</h2><span class="desc">العينات التي وصلت المختبر ورُفضت لأسباب فنية</span></div>
+
+    <div class="hero" id="rejHero"></div>
+
+    <div class="kpi-row" id="rejKpis"></div>
+
+    <div id="rejAlert"></div>
+
+    <div class="card">
+      <div class="card-head"><h3>أسباب الرفض</h3><p>توزيع العينات المرفوضة حسب السبب</p></div>
+      <div class="chart-box"><canvas id="rejByCatChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>أعلى المراكز في عدد العينات المرفوضة</h3><p>أعلى ١٥ مركز</p></div>
+      <div class="chart-box xtall"><canvas id="rejByCountChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>أعلى المراكز في نسبة الرفض</h3><p>نسبة المرفوضة من إجمالي عينات المركز</p></div>
+      <div class="chart-box xtall"><canvas id="rejByPctChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>توزيع المرفوضة حسب اليوم</h3><p>متى تم تجميع العينات المرفوضة</p></div>
+      <div class="chart-box"><canvas id="rejByDayChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>جدول العينات المرفوضة لكل مركز <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="rejCount"></span></h3><p>التفاصيل الكاملة</p></div>
+      <input type="text" class="search" id="rejSearch" placeholder="🔍 ابحث عن مركز…" />
+      <div class="table-wrap"><div class="table-scroll">
+        <table id="rejTable">
+          <thead><tr><th>#</th><th>المركز</th><th>إجمالي العينات</th><th>المرفوضة</th><th>نسبة الرفض</th><th>السبب الأعلى</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div></div>
+    </div>
+
     <!-- 4) أيام الأسبوع -->
     <div class="section" style="--c: var(--yellow)"><span class="bar"></span><h2>أيام الأسبوع</h2><span class="desc">السبت إلى الجمعة</span></div>
     <div class="card">
@@ -430,7 +472,135 @@ const fmt = n => (n == null || isNaN(n)) ? '—' : (Math.abs(n) >= 1000 ? Math.r
 const fmt1 = n => (n == null || isNaN(n)) ? '—' : Number(n).toFixed(1);
 const fmt2 = n => (n == null || isNaN(n)) ? '—' : Number(n).toFixed(2);
 const trunc = (s, n) => s && s.length > n ? s.slice(0, n) + '…' : (s || '');
-const shortName = s => (s || '').replace(' Health Center','').replace(' Primary Healthcare Center','').replace(' – Madinah Health','').replace(' - Madinah Health','').trim();
+
+// Arabic name mapping (without "مركز صحي" prefix per user spec)
+const PHC_AR = {
+  'Al-Hijrah Health Center': 'الهجرة',
+  'Al-Hurra Asharqiyah Health Center': 'الحرة الشرقية',
+  'Hamraa Al-Asad Health Center': 'حمراء الأسد',
+  'Al-‘Aziziyah Health Center': 'العزيزية',
+  "Al-'Aziziyah Health Center": 'العزيزية',
+  'Al-‘Awali Health Center': 'العوالي',
+  "Al-'Awali Health Center": 'العوالي',
+  'Baqdu Al-Dwaykhilah Health Center': 'باقدو',
+  'Al-Fath Health Center': 'الفتح',
+  'Al-Khalidiyah Health Center': 'الخالدية',
+  'Al-Nasr Health Center': 'النصر',
+  'Taibah Health Center': 'طيبة',
+  'Shoran Health Center': 'شوران',
+  'Al-‘Aliyah Health Center': 'العالية',
+  "Al-'Aliyah Health Center": 'العالية',
+  'Bab Al-Majidi Al-Da’im Health Center': 'باب المجيدي',
+  "Bab Al-Majidi Al-Da'im Health Center": 'باب المجيدي',
+  'Al-Jurf Asharqi Health Center': 'الجرف الشرقي',
+  'Al-Faisaliyah Health Center': 'الفيصلية',
+  'Al-Hizam Health Center': 'الحزام',
+  'Qubaa Health Center': 'قباء',
+  'King Fahd Plan Health Center': 'مخطط الملك فهد',
+  'Abu Markhah Health Center': 'أبو مرخة',
+  'Al-Du’aythah Health Center': 'الدعيثة',
+  "Al-Du'aythah Health Center": 'الدعيثة',
+  'Al-Jurf Health Center': 'الجرف',
+  'Al-Qaswa’a Health Center': 'القصواء',
+  "Al-Qaswa'a Health Center": 'القصواء',
+  'Al-Badrani Health Center': 'البدراني',
+  'Al-‘Aqool Health Center': 'العاقول',
+  "Al-'Aqool Health Center": 'العاقول',
+  'Wa’irah Health Center': 'وعيرة',
+  "Wa'irah Health Center": 'وعيرة',
+  '‘Urwah Health Center': 'عروة',
+  "'Urwah Health Center": 'عروة',
+  'Urwah‘ Health Center': 'عروة',
+  "Urwah' Health Center": 'عروة',
+  'Sayid Al-Shuhada Health Center': 'سيد الشهداء',
+  'Durrah Al-Madinah Health Center': 'درة المدينة',
+  'Al-Qiblatayn Bani Salmah Health Center': 'القبلتين وبني سلمة',
+  'Reem Health Center': 'ريم',
+  'Al-Aws Health Center': 'الأوس',
+  'Al-Difa’a Health Center': 'الدفاع',
+  "Al-Difa'a Health Center": 'الدفاع',
+  'Al-Asifreen Health Center': 'الأصيفرين',
+  'Al-Salam Health Center': 'السلام',
+  'Al-Duwaymah Health Center': 'الدويمة',
+  'Al-Hurra Gharbiyah Health Center': 'الحرة الغربية',
+  'Tal’ah Al-Hubub Health Center': 'تلعة الهبوب',
+  "Tal'ah Al-Hubub Health Center": 'تلعة الهبوب',
+  'Al-Yatmah Primary Healthcare Center': 'اليتمة',
+  'Al-‘Usheirah Healthcare Center': 'العشيرة',
+  "Al-'Usheirah Healthcare Center": 'العشيرة',
+  'Abar Al-Mashi Health Center': 'آبار الماشي',
+  'Al-Jafr Primary Healthcare Center – Madinah Health': 'الجفر',
+  'Al-Jafr Primary Healthcare Center - Madinah Health': 'الجفر',
+  'Al-Freesh Health Center': 'الفريش',
+  'Al-Azhari Health Center': 'الأزهري',
+  'Al-Suwaidrah Health Center': 'الصويدرة',
+  'Ghurab Health Center': 'غراب',
+  'Al-Mulailih Health Center': 'المليليح',
+  'Al-Mandasah Health Center': 'المندسة',
+  'Shajwa Health Center': 'شجوى',
+  'Al-Dumairiyah Primary Healthcare Center': 'الضميرية',
+  'Al-Hano Health Center': 'الحنو',
+};
+function shortNameAr(name) {
+  if (!name) return '';
+  // Normalize quotes
+  const trimmed = name.trim();
+  if (PHC_AR[trimmed]) return PHC_AR[trimmed];
+  // Try with normalized apostrophes
+  const norm = trimmed.replace(/['’ʻ`]/g, "'");
+  for (const [k, v] of Object.entries(PHC_AR)) {
+    if (k.replace(/['’ʻ`]/g, "'") === norm) return v;
+  }
+  // Fallback: strip "Health Center" suffix
+  return trimmed.replace(/\s*(Primary\s+)?Healthcare?\s+Center.*$/i, '').replace(/\s*–\s*Madinah\s+Health.*$/i, '').trim();
+}
+
+// Rejected sample patterns — these appear as text in Result_Value when sample is rejected
+const REJECTED_PATTERNS = [
+  // Clotted
+  /\bclot+ed\b/i,
+  // Hemolyzed (many spellings)
+  /\bh[ae]+mol/i, /\bhemoils?is/i, /\bhaemols/i,
+  // Wrong tube/sample/order
+  /\b(wr?[ou]ng|wroung|wrung|roung)\s+(tube|sample|order|collection|container)/i,
+  /\bcontainer\s+collection\s+tube\b/i,
+  /\bwrong\d+/i, // wrong260510004111 pattern
+  /\bno\s+sample\b/i,
+  /\bdouble\s*(order)?\b/i,
+  // QNS - quantity not sufficient
+  /\bq\s*n\s*s\b/i,
+  // Repeat / new sample
+  /\bnew\s+sample\s+for\s+confirmation\b/i,
+  /\b(re-?\s*sample|re-?\s*peat|repeet)\b/i,
+  /\brepeat\s+(sample|test)\b/i,
+  // Lipemic
+  /\blipemic\b/i,
+];
+const REJECTED_CATEGORIES = [
+  { name: 'متجلطة', color: '#ff7b8a', test: v => /\bclot+ed\b/i.test(v) },
+  { name: 'متحللة', color: '#ffb066', test: v => /\bh[ae]+mol|hemoils?is|haemols/i.test(v) },
+  { name: 'خطأ في العينة', color: '#f5a3c7', test: v => /\b(wr?[ou]ng|wroung|wrung|roung)\s+(tube|sample|order|collection|container)|container\s+collection\s+tube|wrong\d+|no\s+sample|double\s*(order)?\b/i.test(v) },
+  { name: 'كمية غير كافية', color: '#6ec4f7', test: v => /\bq\s*n\s*s\b/i.test(v) },
+  { name: 'طلب إعادة', color: '#ffd76e', test: v => /\bnew\s+sample\s+for\s+confirmation\b|\b(re-?\s*sample|re-?\s*peat|repeet)\b|\brepeat\s+(sample|test)\b/i.test(v) },
+  { name: 'دهنية', color: '#b6a7f0', test: v => /\blipemic\b/i.test(v) },
+];
+function isRejected(value) {
+  if (!value) return false;
+  const s = String(value).trim();
+  if (!s) return false;
+  // Don't match numeric values
+  if (/^-?\d+\.?\d*$/.test(s)) return false;
+  return REJECTED_PATTERNS.some(p => p.test(s));
+}
+function rejectedCategory(value) {
+  if (!value) return null;
+  const s = String(value).trim();
+  for (const cat of REJECTED_CATEGORIES) {
+    if (cat.test(s)) return cat.name;
+  }
+  return null;
+}
+const shortName = s => shortNameAr(s);
 
 function categorize(name) {
   const n = (name || '').toUpperCase();
@@ -609,7 +779,25 @@ function analyze(rows) {
   const samples = new Map();
   const lostMap = new Map(); // PHC -> { count, days: Map<dateStr, count>, oldest: Date }
   const lostByDay = new Map(); // dateStr -> count
+  const rejMap = new Map(); // PHC -> { count, cats: Map<cat, count>, days: Map<dateStr, count> }
+  const rejByCat = new Map(); // category -> count
+  const rejByDay = new Map(); // date -> count
+  const rejectedSampleIds = new Set(); // Sample_IDs that have at least one rejected result
   let lostTotal = 0;
+  let rejTotal = 0;
+
+  // First pass: identify rejected samples
+  rows.forEach(row => {
+    const sid = String(row[c.sample] || '').trim();
+    if (!sid) return;
+    const status = c.status ? String(row[c.status] || '').trim() : '';
+    if (status === 'Collected') return; // lost, not rejected
+    const val = c.value ? row[c.value] : null;
+    if (isRejected(val)) {
+      rejectedSampleIds.add(sid);
+    }
+  });
+
   rows.forEach(row => {
     const sid = String(row[c.sample] || '').trim();
     if (!sid) return;
@@ -617,7 +805,6 @@ function analyze(rows) {
 
     // Track lost samples (Collected status only - never sent to lab)
     if (status === 'Collected') {
-      // count once per sample
       if (!samples.has('_lost_' + sid)) {
         samples.set('_lost_' + sid, true);
         const phc = c.phc ? (String(row[c.phc] || '').trim() || 'غير محدد') : 'غير محدد';
@@ -633,7 +820,27 @@ function analyze(rows) {
           if (!L.oldest || collDT < L.oldest) L.oldest = collDT;
         }
       }
-      return; // skip rest of processing
+      return;
+    }
+
+    // Track rejected samples (once per sample, on first rejected row found)
+    if (rejectedSampleIds.has(sid) && !samples.has('_rej_' + sid)) {
+      samples.set('_rej_' + sid, true);
+      const phc = c.phc ? (String(row[c.phc] || '').trim() || 'غير محدد') : 'غير محدد';
+      // Find category from this specific row's value
+      const cat = rejectedCategory(row[c.value]) || 'أخرى';
+      const collDT = pDT(row[c.collD], row[c.collT]);
+      if (!rejMap.has(phc)) rejMap.set(phc, { count: 0, cats: new Map(), days: new Map() });
+      const R = rejMap.get(phc);
+      R.count++;
+      rejTotal++;
+      R.cats.set(cat, (R.cats.get(cat) || 0) + 1);
+      rejByCat.set(cat, (rejByCat.get(cat) || 0) + 1);
+      if (collDT) {
+        const dStr = collDT.toISOString().slice(0,10);
+        R.days.set(dStr, (R.days.get(dStr) || 0) + 1);
+        rejByDay.set(dStr, (rejByDay.get(dStr) || 0) + 1);
+      }
     }
 
     if (samples.has(sid)) return;
@@ -649,7 +856,7 @@ function analyze(rows) {
   });
 
   // Remove tracking keys
-  [...samples.keys()].forEach(k => { if (typeof k === 'string' && k.startsWith('_lost_')) samples.delete(k); });
+  [...samples.keys()].forEach(k => { if (typeof k === 'string' && (k.startsWith('_lost_') || k.startsWith('_rej_'))) samples.delete(k); });
 
   const phcMap = new Map();
   const dailyVol = new Map();
@@ -757,7 +964,9 @@ function analyze(rows) {
     const arr = v.arrival;
     const total = v.n + v.h + v.l;
     const lostInfo = lostMap.get(name) || { count: 0, days: new Map(), oldest: null };
+    const rejInfo = rejMap.get(name) || { count: 0, cats: new Map(), days: new Map() };
     const peakDay = lostInfo.days.size ? [...lostInfo.days.entries()].sort((a,b) => b[1] - a[1])[0] : null;
+    const topRejCat = rejInfo.cats.size ? [...rejInfo.cats.entries()].sort((a,b) => b[1] - a[1])[0] : null;
     const sampleCount = v.samples.size;
     const totalIncLost = sampleCount + lostInfo.count;
     return {
@@ -778,6 +987,9 @@ function analyze(rows) {
       lostPeakDay: peakDay ? { day: peakDay[0], count: peakDay[1] } : null,
       lostOldest: lostInfo.oldest,
       totalIncLost,
+      rej: rejInfo.count,
+      rejPct: sampleCount > 0 ? (rejInfo.count / sampleCount * 100) : 0,
+      rejTopCat: topRejCat ? { name: topRejCat[0], count: topRejCat[1] } : null,
     };
   }).sort((a,b) => b.samples - a.samples);
 
@@ -861,6 +1073,7 @@ function analyze(rows) {
       totalCls: normalCnt + highCnt + lowCnt,
       abRate: (normalCnt + highCnt + lowCnt) > 0 ? ((highCnt + lowCnt) / (normalCnt + highCnt + lowCnt) * 100) : 0,
       lostTotal,
+      rejTotal,
     },
     phc: phcArr, eligible, tiers,
     tests: testsArr, params: paramsArr, cats: catsArr,
@@ -868,6 +1081,8 @@ function analyze(rows) {
     weekdayOrdered, dayLabels,
     arrivalByDayOrdered,
     lostByDay: [...lostByDay.entries()].sort((a,b) => a[0].localeCompare(b[0])),
+    rejByCat: [...rejByCat.entries()].sort((a,b) => b[1] - a[1]),
+    rejByDay: [...rejByDay.entries()].sort((a,b) => a[0].localeCompare(b[0])),
   };
 }
 
@@ -881,6 +1096,7 @@ function renderAll(a) {
   renderKpis(a);
   renderHero(a);
   renderLostSection(a);
+  renderRejSection(a);
   renderTierList(a);
   renderTestsKpis(a);
   renderCriticalTestAlerts(a);
@@ -926,6 +1142,84 @@ function renderHero(a) {
       <span>متوسط <strong>${fmt2(ar.avg)}س</strong></span>
       <span>وسيط <strong>${fmt2(ar.median)}س</strong></span>
     </div>`;
+}
+
+function renderRejSection(a) {
+  const phcs = a.phc;
+  const totalSamples = phcs.reduce((s, p) => s + p.samples, 0);
+  const overallRejPct = totalSamples > 0 ? (a.s.rejTotal / totalSamples * 100) : 0;
+  const affectedCenters = phcs.filter(p => p.rej > 0).length;
+  const worstCenter = [...phcs].filter(p => p.rej > 0).sort((x,y) => y.rejPct - x.rejPct)[0];
+  const topCat = a.rejByCat[0] || null;
+
+  // Hero
+  const heroEl = document.getElementById('rejHero');
+  if (heroEl) {
+    const cl = overallRejPct >= 5 ? 'var(--red)' : overallRejPct >= 2 ? 'var(--orange)' : 'var(--green)';
+    heroEl.style.setProperty('--c', cl);
+    heroEl.innerHTML = `
+      <h3>نسبة العينات المرفوضة من إجمالي الواصل للمختبر</h3>
+      <div class="big-num" style="color:${cl}">${fmt1(overallRejPct)}%</div>
+      <div class="hero-prog"><div style="width:${Math.min(overallRejPct * 5, 100)}%; background:${cl}"></div></div>
+      <div class="hero-sub">
+        <span>إجمالي مرفوضة <strong>${fmt(a.s.rejTotal)}</strong></span>
+        <span>مراكز متأثرة <strong>${fmt(affectedCenters)}</strong></span>
+        <span>السبب الأعلى <strong>${topCat ? topCat[0] : '—'}</strong></span>
+        <span>الأعلى نسبة <strong>${worstCenter ? fmt1(worstCenter.rejPct)+'%' : '—'}</strong></span>
+      </div>`;
+  }
+
+  // KPIs
+  const kpisEl = document.getElementById('rejKpis');
+  if (kpisEl) {
+    const k = [
+      { c:'var(--red)', l:'المرفوضة', v: fmt(a.s.rejTotal), sub: 'إجمالي' },
+      { c:'var(--orange)', l:'المراكز المتأثرة', v: fmt(affectedCenters), sub: `من ${a.s.centers}` },
+      { c:'var(--pink)', l:'متوسط الرفض', v: fmt1(overallRejPct)+'%', sub: 'من الواصل' },
+      { c:'var(--yellow)', l:'أعلى نسبة رفض', v: worstCenter ? fmt1(worstCenter.rejPct)+'%' : '—', sub: worstCenter ? trunc(shortName(worstCenter.name), 14) : '—' },
+    ];
+    kpisEl.innerHTML = k.map(x => `
+      <div class="kpi" style="--c:${x.c}">
+        <div class="lbl">${x.l}</div>
+        <div class="val mono" style="color:${x.c}">${x.v}</div>
+        <div class="sub">${x.sub}</div>
+      </div>`).join('');
+  }
+
+  // Critical alert
+  const alertEl = document.getElementById('rejAlert');
+  if (alertEl) {
+    const critical = [...phcs].filter(p => p.rej >= 10 && p.rejPct >= 5).sort((x,y) => y.rejPct - x.rejPct).slice(0, 5);
+    if (critical.length > 0) {
+      alertEl.innerHTML = `
+        <div class="alert-red">
+          <h4>🚨 مراكز تحتاج مراجعة في جودة العينات</h4>
+          <p>${critical.map(p => `<strong>${shortName(p.name)}</strong>: ${fmt(p.rej)} مرفوضة (${fmt1(p.rejPct)}%)`).join(' · ')}</p>
+        </div>`;
+    } else {
+      alertEl.innerHTML = '';
+    }
+  }
+
+  // Table
+  const tblEl = document.querySelector('#rejTable tbody');
+  if (tblEl) {
+    const sorted = [...phcs].filter(p => p.rej > 0).sort((x,y) => y.rej - x.rej);
+    document.getElementById('rejCount').textContent = `${sorted.length} مركز`;
+    tblEl.innerHTML = sorted.map((p, i) => {
+      const pctCls = p.rejPct >= 5 ? 't-bad' : p.rejPct >= 2 ? 't-warn' : 't-good';
+      const topReason = p.rejTopCat ? `${p.rejTopCat.name} (${p.rejTopCat.count})` : '—';
+      return `
+        <tr data-name="${p.name.toLowerCase()}">
+          <td class="num">${i+1}</td>
+          <td>${shortName(p.name)}</td>
+          <td class="num">${fmt(p.samples)}</td>
+          <td class="num t-bad">${fmt(p.rej)}</td>
+          <td class="num ${pctCls}">${fmt1(p.rejPct)}%</td>
+          <td>${topReason}</td>
+        </tr>`;
+    }).join('');
+  }
 }
 
 function renderLostSection(a) {
@@ -1142,6 +1436,14 @@ function renderInsights(a) {
     if (worstLost) ins.push({ c:'var(--orange)', ic:'📦', title:'الأعلى في نسبة الفقد', text:`${shortName(worstLost.name)} — ${fmt1(worstLost.lostPct)}% من عيناته مفقودة (${fmt(worstLost.lost)} عينة).` });
   }
 
+  // Rejected samples insights
+  if (a.s.rejTotal > 0) {
+    const topCat = a.rejByCat && a.rejByCat[0];
+    ins.push({ c:'var(--orange)', ic:'❌', title:'العينات المرفوضة', text:`${fmt(a.s.rejTotal)} عينة مرفوضة${topCat ? ` — السبب الأعلى: ${topCat[0]} (${fmt(topCat[1])} حالة)` : ''}.` });
+    const worstRej = [...a.phc].filter(p => p.rej > 0 && p.samples >= 50).sort((x,y) => y.rejPct - x.rejPct)[0];
+    if (worstRej) ins.push({ c:'var(--red)', ic:'⚠', title:'الأعلى في نسبة الرفض', text:`${shortName(worstRej.name)} — ${fmt1(worstRej.rejPct)}% (${fmt(worstRej.rej)} عينة).` });
+  }
+
   const busyIdx = a.weekdayOrdered.indexOf(Math.max(...a.weekdayOrdered));
   ins.push({ c:'var(--purple)', ic:'📅', title:'أعلى أيام النشاط', text:`${a.dayLabels[busyIdx]} — ${fmt(a.weekdayOrdered[busyIdx])} عينة.` });
 
@@ -1335,6 +1637,66 @@ function renderAllCharts(a) {
     });
   }
 
+  // ========== REJECTED SAMPLES CHARTS ==========
+  const rejPhcs = [...a.phc].filter(p => p.rej > 0);
+  // by category (doughnut)
+  if (document.getElementById('rejByCatChart') && a.rejByCat && a.rejByCat.length > 0) {
+    const catColors = { 'متجلطة':'#ff7b8a', 'متحللة':'#ffb066', 'خطأ في العينة':'#f5a3c7', 'كمية غير كافية':'#6ec4f7', 'طلب إعادة':'#ffd76e', 'دهنية':'#b6a7f0', 'أخرى':'#8893b3' };
+    STATE.charts.rejByCat = new Chart(document.getElementById('rejByCatChart'), {
+      type: 'doughnut',
+      data: {
+        labels: a.rejByCat.map(c => c[0]),
+        datasets: [{
+          data: a.rejByCat.map(c => c[1]),
+          backgroundColor: a.rejByCat.map(c => catColors[c[0]] || '#8893b3'),
+          borderColor: '#151b2f', borderWidth: 2,
+        }]
+      },
+      options: { cutout:'60%',
+        plugins: { legend: { position:'bottom', labels: { font: { size: 10.5 }, color: C.muted, boxWidth: 10, boxHeight: 10, padding: 8 } },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${fmt(ctx.parsed)}` } } } }
+    });
+  }
+  // by count
+  const rejByCount = [...rejPhcs].sort((x,y) => y.rej - x.rej).slice(0, 15);
+  if (document.getElementById('rejByCountChart')) {
+    STATE.charts.rejByCount = new Chart(document.getElementById('rejByCountChart'), {
+      type: 'bar',
+      data: { labels: rejByCount.map(p => trunc(shortName(p.name), 22)),
+        datasets: [{ data: rejByCount.map(p => p.rej),
+          backgroundColor: ctx => gradH(ctx, 'rgba(245,163,199,0.95)', 'rgba(245,163,199,0.3)'),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: hBarOpts(' عينة')
+    });
+  }
+  // by pct
+  const rejByPct = [...rejPhcs].filter(p => p.samples >= 50).sort((x,y) => y.rejPct - x.rejPct).slice(0, 15);
+  if (document.getElementById('rejByPctChart')) {
+    STATE.charts.rejByPct = new Chart(document.getElementById('rejByPctChart'), {
+      type: 'bar',
+      data: { labels: rejByPct.map(p => trunc(shortName(p.name), 22)),
+        datasets: [{ data: rejByPct.map(p => p.rejPct),
+          backgroundColor: rejByPct.map(p => p.rejPct >= 5 ? C.red : p.rejPct >= 2 ? C.orange : C.yellow),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+  // by day
+  if (document.getElementById('rejByDayChart') && a.rejByDay) {
+    const dayLabels = a.rejByDay.map(d => d[0].slice(5));
+    const dayVals = a.rejByDay.map(d => d[1]);
+    STATE.charts.rejByDay = new Chart(document.getElementById('rejByDayChart'), {
+      type: 'bar',
+      data: { labels: dayLabels,
+        datasets: [{ data: dayVals,
+          backgroundColor: ctx => gradV(ctx, 'rgba(245,163,199,0.9)', 'rgba(245,163,199,0.2)'),
+          borderRadius: 6, maxBarThickness: 42 }] },
+      options: vBarOpts(' عينة')
+    });
+  }
+
   // ========== TESTS CHARTS ==========
   const topTests = a.tests.slice(0, 15);
   STATE.charts.topTests = new Chart(document.getElementById('topTestsChart'), {
@@ -1461,6 +1823,7 @@ function attachSearches() {
   }
   bind('phcSearch', '#phcTable tbody tr');
   bind('lostSearch', '#lostTable tbody tr');
+  bind('rejSearch', '#rejTable tbody tr');
   bind('testBdSearch', '#testBreakdown .test-row');
   bind('testTableSearch', '#testsTable tbody tr');
 }
@@ -1548,12 +1911,17 @@ async function exportPdf(mode = 'mobile') {
       const imgs = [];
       for (const block of blocks) {
         try {
+          // Force a reflow before capturing each block to ensure dimensions are stable
+          await new Promise(r => requestAnimationFrame(r));
           const c = await html2canvas(block, {
             backgroundColor: '#0a0e1a',
             scale: scale,
             useCORS: true,
             windowWidth: refWidthPx,
             logging: false,
+            // Capture the full element height even if it's scrollable
+            height: block.scrollHeight,
+            windowHeight: block.scrollHeight,
           });
           imgs.push({ dataUrl: c.toDataURL('image/jpeg', 0.82), w: c.width, h: c.height });
         } catch (err) {
@@ -1570,7 +1938,7 @@ async function exportPdf(mode = 'mobile') {
       const HEADER_HEIGHT_MM = isDesktop ? 38 : 42; // tall header
       const totalContentPx = imgs.reduce((a, im) => a + im.h, 0);
       const totalContentMm = totalContentPx / pxPerMm;
-      const pageH_mm = HEADER_HEIGHT_MM + totalContentMm + 6;
+      const pageH_mm = HEADER_HEIGHT_MM + totalContentMm + 12; // bottom padding
 
       // Create PDF with custom long page size
       pdf = new jsPDF({
