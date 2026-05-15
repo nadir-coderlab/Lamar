@@ -188,19 +188,11 @@
   #upload-section { display: block; }
   #upload-section.hide { display: none; }
 
-  /* PDF MODE — critical for clean export without cutting */
-  body.pdf-mode .shell { padding: 18px 14px !important; }
-  body.pdf-mode .card,
-  body.pdf-mode .hero,
-  body.pdf-mode .alert-red,
-  body.pdf-mode .intro,
-  body.pdf-mode .kpi-row,
-  body.pdf-mode .insights-grid {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-  body.pdf-mode .section { page-break-after: avoid !important; break-after: avoid !important; }
-  body.pdf-desktop .shell { max-width: 1080px !important; }
+  /* PDF MODE — capture as one continuous image, no page-break tricks needed */
+  body.pdf-mode .shell { padding: 14px 12px !important; }
+  body.pdf-mode .card { margin-bottom: 8px !important; }
+  body.pdf-mode .section { margin: 12px 0 6px !important; }
+  body.pdf-desktop .shell { max-width: 1080px !important; padding: 14px 16px !important; }
   body.pdf-desktop .chart-box { height: 320px !important; }
   body.pdf-desktop .chart-box.xtall { height: 480px !important; }
   body.pdf-desktop .tier-grid { grid-template-columns: repeat(4, 1fr) !important; }
@@ -261,12 +253,6 @@
   </div>
 
   <div id="app">
-    <div class="note">
-      <strong>المصطلحات:</strong> كل <strong>Sample_ID</strong> = عينة واحدة (panel).
-      <strong>وصول العينة</strong> = من السحب إلى الاستقبال. <strong>الالتزام</strong> = نسبة العينات الواصلة ضمن ٤.٥ ساعة.
-      <strong>خارج المعدل</strong> = نتيجة مرتفعة أو منخفضة عن المرجع.
-    </div>
-
     <!-- 1) حجم العمل -->
     <div class="section" style="--c: var(--purple)"><span class="bar"></span><h2>حجم العمل</h2><span class="desc">الأرقام الكلية</span></div>
     <div class="kpi-row" id="kpisMain"></div>
@@ -1389,7 +1375,7 @@ document.querySelectorAll('.export-opt').forEach(opt => {
   });
 });
 
-// CRITICAL: New PDF export — captures each card/section separately to avoid cutting
+// PDF: capture the whole app as one tall image, then slice it into pages with NO gaps
 async function exportPdf(mode = 'mobile') {
   const orig = pdfBtn.innerHTML;
   pdfBtn.disabled = true;
@@ -1406,32 +1392,13 @@ async function exportPdf(mode = 'mobile') {
   try {
     const { jsPDF } = window.jspdf;
     const pdf = isDesktop ? new jsPDF('l', 'mm', 'a4') : new jsPDF('p', 'mm', 'a4');
-    const W = pdf.internal.pageSize.getWidth();
-    const H = pdf.internal.pageSize.getHeight();
-    const M = isDesktop ? 8 : 6;
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
     const s = STATE.an.s;
 
-    // Cover
-    pdf.setFillColor(10, 14, 26);
-    pdf.rect(0, 0, W, H, 'F');
-    pdf.setTextColor(139, 124, 229);
-    pdf.setFontSize(isDesktop ? 10 : 8);
-    pdf.text('UNIFIED LAB CENTER', M, 18);
-    pdf.setTextColor(231, 236, 247);
-    pdf.setFontSize(isDesktop ? 24 : 18);
-    pdf.text('Centers & Tests Report', M, isDesktop ? 40 : 34);
-    pdf.setFontSize(isDesktop ? 13 : 11);
-    pdf.setTextColor(136, 147, 179);
-    pdf.text(`Period: ${s.periodStart} to ${s.periodEnd}`, M, isDesktop ? 54 : 44);
-    pdf.text(`${s.samples.toLocaleString()} samples | ${s.centers} centers | ${s.tests} tests`, M, isDesktop ? 64 : 52);
-    pdf.text(`SLA compliance: ${s.arrivalStats.within.toFixed(1)}%`, M, isDesktop ? 74 : 60);
-
-    // Get all block-level elements to render
-    // Strategy: render each card/hero/intro/section as one image, don't split it
     const app = document.getElementById('app');
-    const blocks = Array.from(app.children);
 
-    // Expand all tables for full visibility
+    // Expand all tables fully
     const origs = [];
     app.querySelectorAll('.table-scroll').forEach(t => {
       origs.push({ el:t, mH:t.style.maxHeight, oY:t.style.overflowY });
@@ -1439,116 +1406,48 @@ async function exportPdf(mode = 'mobile') {
       t.style.overflowY = 'visible';
     });
 
-    const printableW = W - 2*M;
-    const printableH = H - 16;
-    let currentY = 8;
+    try {
+      // Capture entire app as ONE long canvas
+      const canvas = await html2canvas(app, {
+        backgroundColor: '#0a0e1a',
+        scale: isDesktop ? 1.5 : 2,
+        useCORS: true,
+        windowWidth: app.scrollWidth,
+        logging: false,
+      });
 
-    // Add header for first content page
-    pdf.addPage();
-    pdf.setFillColor(10, 14, 26);
-    pdf.rect(0, 0, W, H, 'F');
+      // pixel-to-mm ratio (canvas is rendered to fit page width)
+      const pxPerMm = canvas.width / pageW;
+      // page height in canvas pixels
+      const pagePxH = pageH * pxPerMm;
 
-    let pendingSection = null;
-
-    for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i];
-      if (!block || block.offsetHeight === 0) continue;
-
-      // Identify section headers — keep them with the next block
-      if (block.classList.contains('section')) {
-        pendingSection = block;
-        continue;
-      }
-
-      try {
-        // If we have pending section, capture them as a group
-        let elemsToCapture = pendingSection ? [pendingSection, block] : [block];
-
-        // Capture each elem and try to combine
-        const canvases = [];
-        for (const e of elemsToCapture) {
-          const c = await html2canvas(e, {
-            backgroundColor: '#0a0e1a',
-            scale: isDesktop ? 1.5 : 2,
-            useCORS: true,
-            windowWidth: e.scrollWidth,
-            logging: false,
-          });
-          canvases.push(c);
-        }
-
-        // Combine canvases vertically
-        const combinedW = Math.max(...canvases.map(c => c.width));
-        const combinedH = canvases.reduce((a, c) => a + c.height, 0);
-        const combined = document.createElement('canvas');
-        combined.width = combinedW;
-        combined.height = combinedH;
-        const ctx = combined.getContext('2d');
+      let yOff = 0;
+      let isFirst = true;
+      while (yOff < canvas.height) {
+        const sliceH = Math.min(pagePxH, canvas.height - yOff);
+        // create a slice canvas
+        const slice = document.createElement('canvas');
+        slice.width = canvas.width;
+        slice.height = sliceH;
+        const ctx = slice.getContext('2d');
         ctx.fillStyle = '#0a0e1a';
-        ctx.fillRect(0, 0, combinedW, combinedH);
-        let yOff = 0;
-        for (const c of canvases) {
-          ctx.drawImage(c, 0, yOff);
-          yOff += c.height;
-        }
+        ctx.fillRect(0, 0, slice.width, slice.height);
+        ctx.drawImage(canvas, 0, -yOff);
 
-        pendingSection = null;
+        if (!isFirst) pdf.addPage();
+        else isFirst = false;
 
-        // Compute fit
-        const pxMm = combined.width / printableW;
-        const blockMm = combined.height / pxMm;
+        pdf.setFillColor(10, 14, 26);
+        pdf.rect(0, 0, pageW, pageH, 'F');
+        // place image at top-left, full width, exact slice height
+        const sliceMm = sliceH / pxPerMm;
+        pdf.addImage(slice.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, pageW, sliceMm);
 
-        if (blockMm <= printableH) {
-          // Block fits on one page
-          if (currentY + blockMm > printableH + 8) {
-            // Move to new page
-            pdf.addPage();
-            pdf.setFillColor(10, 14, 26);
-            pdf.rect(0, 0, W, H, 'F');
-            currentY = 8;
-          }
-          pdf.addImage(combined.toDataURL('image/jpeg', 0.85), 'JPEG', M, currentY, printableW, blockMm);
-          currentY += blockMm + 3;
-        } else {
-          // Block too big — slice it
-          // Force a new page first
-          if (currentY > 10) {
-            pdf.addPage();
-            pdf.setFillColor(10, 14, 26);
-            pdf.rect(0, 0, W, H, 'F');
-            currentY = 8;
-          }
-          const pH = (printableH) * pxMm;
-          let pos = 0;
-          while (pos < combined.height) {
-            const sliceH = Math.min(pH, combined.height - pos);
-            const sliceCanvas = document.createElement('canvas');
-            sliceCanvas.width = combined.width;
-            sliceCanvas.height = sliceH;
-            const sliceCtx = sliceCanvas.getContext('2d');
-            sliceCtx.fillStyle = '#0a0e1a';
-            sliceCtx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-            sliceCtx.drawImage(combined, 0, -pos);
-            const sliceMm = sliceH / pxMm;
-            pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.85), 'JPEG', M, currentY, printableW, sliceMm);
-            pos += sliceH;
-            if (pos < combined.height) {
-              pdf.addPage();
-              pdf.setFillColor(10, 14, 26);
-              pdf.rect(0, 0, W, H, 'F');
-              currentY = 8;
-            } else {
-              currentY = sliceMm + 8 + 3;
-            }
-          }
-        }
-      } catch(err) {
-        console.error('Error capturing block:', err, block);
+        yOff += sliceH;
       }
+    } finally {
+      origs.forEach(o => { o.el.style.maxHeight = o.mH; o.el.style.overflowY = o.oY; });
     }
-
-    // Restore tables
-    origs.forEach(o => { o.el.style.maxHeight = o.mH; o.el.style.overflowY = o.oY; });
 
     const fname = `Lab_Report_${isDesktop ? 'Desktop' : 'Mobile'}_${s.periodStart}.pdf`;
     pdf.save(fname);
