@@ -276,8 +276,8 @@
     <div class="section" style="--c: var(--orange)"><span class="bar"></span><h2>وصول العينات</h2><span class="desc">الالتزام بـ ٤.٥ ساعة</span></div>
     <div class="hero" id="heroBox"></div>
     <div class="card"><div class="card-head"><h3>مقارنة المراكز — متوسط الوصول والالتزام</h3><p>متوسط الزمن مع نسبة الالتزام · أعلى ١٥ مركز</p></div><div class="chart-box xtall"><canvas id="arrivalComboChart"></canvas></div></div>
-    <div class="card"><div class="card-head"><h3>أقل المراكز التزاماً</h3><p>تحتاج تدخل</p></div><div class="chart-box xtall"><canvas id="worstComplianceChart"></canvas></div></div>
-    <div class="card"><div class="card-head"><h3>أعلى المراكز التزاماً</h3><p>نماذج يُحتذى بها</p></div><div class="chart-box xtall"><canvas id="bestComplianceChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>أقل المراكز التزاماً</h3><p>في وصول العينات خلال ٤.٥ ساعة من السحب — تحتاج تدخل</p></div><div class="chart-box xtall"><canvas id="worstComplianceChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>أعلى المراكز التزاماً</h3><p>في وصول العينات خلال ٤.٥ ساعة من السحب — نماذج يُحتذى بها</p></div><div class="chart-box xtall"><canvas id="bestComplianceChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعداد العينات المتأخرة</h3><p>تجاوزت ٤.٥ ساعة — أعلى ١٥ مركز</p></div><div class="chart-box xtall"><canvas id="overTargetChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعلى مدة وصول مسجلة</h3><p>أسوأ حالة في كل مركز</p></div><div class="chart-box xtall"><canvas id="worstCaseChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>توزيع المراكز حسب الالتزام</h3><p>كم مركز عند كل مستوى</p></div><div class="chart-box"><canvas id="phcComplianceChart"></canvas></div></div>
@@ -316,11 +316,6 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h3>الفحوصات حسب الفئة</h3><p>Chemistry, CBC, Hormones, Vitamins…</p></div>
-      <div class="chart-box tall"><canvas id="testCatChart"></canvas></div>
-    </div>
-
-    <div class="card">
       <div class="card-head"><h3>الفحوصات حسب نمط الخلل</h3><p>طبيعي · مرتفع · منخفض — أعلى ١٢ فحص بالنتائج</p></div>
       <div class="chart-box xtall"><canvas id="testResultsChart"></canvas></div>
     </div>
@@ -339,9 +334,9 @@
     <div class="card">
       <div class="card-head"><h3>جدول الفحوصات <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="testCount"></span></h3><p>تفاصيل كل فحص</p></div>
       <input type="text" class="search" id="testTableSearch" placeholder="🔍 ابحث…" />
-      <div class="table-wrap"><div class="table-scroll" style="max-height:400px">
+      <div class="table-wrap"><div class="table-scroll" style="max-height:400px" data-test-table>
         <table id="testsTable">
-          <thead><tr><th>#</th><th>الفحص</th><th>الفئة</th><th>عينات</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th></tr></thead>
+          <thead><tr><th>#</th><th>الفحص</th><th>عينات</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th></tr></thead>
           <tbody></tbody>
         </table>
       </div></div>
@@ -920,7 +915,7 @@ function renderTestBreakdown(a) {
       return `
         <div class="test-row" data-name="${(t.name + ' ' + t.cat).toLowerCase()}">
           <div class="test-head">
-            <div class="test-name">${t.name}<span class="chip">${t.cat}</span></div>
+            <div class="test-name">${t.name}</div>
             <div class="test-count">${fmt(t.samples)} عينة</div>
           </div>
           <div style="color:var(--dim); font-size:10.5px">لا توجد نتائج كمية</div>
@@ -929,7 +924,7 @@ function renderTestBreakdown(a) {
     return `
       <div class="test-row" data-name="${(t.name + ' ' + t.cat).toLowerCase()}">
         <div class="test-head">
-          <div class="test-name">${t.name}<span class="chip">${t.cat}</span></div>
+          <div class="test-name">${t.name}</div>
           <div class="test-count">${fmt(t.samples)} عينة · ${fmt(t.total)} نتيجة</div>
         </div>
         <div class="test-bar">
@@ -954,7 +949,6 @@ function renderTestsTable(a) {
       <tr data-name="${(t.name + ' ' + t.cat).toLowerCase()}">
         <td class="num">${i+1}</td>
         <td>${t.name}</td>
-        <td><span class="chip">${t.cat}</span></td>
         <td class="num">${fmt(t.samples)}</td>
         <td class="num t-n">${fmt(t.n)}</td>
         <td class="num t-h">${fmt(t.h)}</td>
@@ -1153,12 +1147,6 @@ function renderAllCharts(a) {
     options: { ...hBarOpts('%'), scales: { ...hBarOpts().scales, x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
   });
 
-  STATE.charts.testCat = new Chart(document.getElementById('testCatChart'), {
-    type: 'bar',
-    data: { labels: a.cats.map(c => c.name), datasets: [{ data: a.cats.map(c => c.samples), backgroundColor: ctx => gradH(ctx, 'rgba(139,124,229,0.95)', 'rgba(139,124,229,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
-    options: hBarOpts(' عينة')
-  });
-
   // Stacked test results
   const stackedTests = [...a.tests].filter(t => t.total > 0).sort((x,y) => y.total - x.total).slice(0, 12);
   STATE.charts.testResults = new Chart(document.getElementById('testResultsChart'), {
@@ -1334,9 +1322,16 @@ async function exportPdf(mode = 'mobile') {
     // Expand tables
     const origs = [];
     app.querySelectorAll('.table-scroll').forEach(t => {
-      origs.push({ el:t, mH:t.style.maxHeight, oY:t.style.overflowY });
-      t.style.maxHeight = 'none';
-      t.style.overflowY = 'visible';
+      origs.push({
+        el: t,
+        mH: t.style.maxHeight,
+        oY: t.style.overflowY,
+        attrMH: t.getAttribute('style') || ''
+      });
+      // Force override inline styles
+      t.style.setProperty('max-height', 'none', 'important');
+      t.style.setProperty('overflow-y', 'visible', 'important');
+      t.style.setProperty('height', 'auto', 'important');
     });
 
     let pdf;
@@ -1422,7 +1417,7 @@ async function exportPdf(mode = 'mobile') {
         yMm += hMm;
       }
     } finally {
-      origs.forEach(o => { o.el.style.maxHeight = o.mH; o.el.style.overflowY = o.oY; });
+      origs.forEach(o => { o.el.setAttribute('style', o.attrMH); });
     }
 
     const fname = `Lab_Report_${isDesktop ? 'Desktop' : 'Mobile'}_${s.periodStart}.pdf`;
