@@ -34,20 +34,22 @@
   .main-title-block {
     background: linear-gradient(135deg, rgba(139,124,229,0.12), rgba(110,196,247,0.08));
     border: 1px solid rgba(139,124,229,0.3);
-    border-radius: 14px; padding: 14px 14px 14px 14px; margin: 10px 0 14px;
+    border-radius: 14px; padding: 16px 14px; margin: 10px 0 14px;
     position: relative; overflow: hidden;
-    display: flex; align-items: center; gap: 12px;
+    text-align: center;
   }
   .main-title-block::before {
     content:''; position:absolute; top:0; left:0; right:0; height:3px;
     background: linear-gradient(90deg, var(--purple), var(--blue));
   }
   .main-logo {
-    width: 48px; height: auto; flex-shrink: 0;
+    position: absolute; top: 14px; right: 14px;
+    width: 50px; height: auto;
     filter: drop-shadow(0 2px 6px rgba(110,196,247,0.25));
+    z-index: 2;
   }
-  @media (min-width: 600px) { .main-logo { width: 60px; } }
-  .main-title-text { flex: 1; min-width: 0; text-align: center; }
+  @media (min-width: 600px) { .main-logo { width: 64px; top: 18px; right: 18px; } }
+  .main-title-text { display: block; width: 100%; }
   .corner-logo {
     position: fixed; top: 12px; left: 12px; width: 44px; height: auto;
     z-index: 50; opacity: 0.92;
@@ -2360,9 +2362,17 @@ async function exportModalPdf() {
   const modalBody = document.getElementById('testsModalBody');
   modalBody.classList.add('pdf-mode');
   document.body.classList.add('pdf-mode');
-  await new Promise(r => setTimeout(r, 300));
+
+  // CRITICAL: Wait for fonts to fully load before capturing (prevents Arabic text mangling)
+  try { await document.fonts.ready; } catch(e) {}
+  // Force load Arabic font specifically
+  try { await document.fonts.load('700 22px "IBM Plex Sans Arabic"'); } catch(e) {}
+  try { await document.fonts.load('600 14px "IBM Plex Sans Arabic"'); } catch(e) {}
+  try { await document.fonts.load('400 12px "IBM Plex Sans Arabic"'); } catch(e) {}
+
+  await new Promise(r => setTimeout(r, 500));
   Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
-  await new Promise(r => setTimeout(r, 700));
+  await new Promise(r => setTimeout(r, 900));
 
   try {
     const { jsPDF } = window.jspdf;
@@ -2393,6 +2403,9 @@ async function exportModalPdf() {
             useCORS: true,
             windowWidth: refWidthPx,
             logging: false,
+            letterRendering: true,
+            imageTimeout: 15000,
+            allowTaint: false,
             height: block.scrollHeight,
             windowHeight: block.scrollHeight,
           });
@@ -2532,9 +2545,15 @@ async function exportPdf(mode = 'mobile') {
   document.body.classList.add('pdf-mode');
   if (isDesktop) document.body.classList.add('pdf-desktop');
 
-  await new Promise(r => setTimeout(r, 300));
+  // CRITICAL: Wait for fonts to fully load (prevents Arabic text from rendering incorrectly)
+  try { await document.fonts.ready; } catch(e) {}
+  try { await document.fonts.load('700 22px "IBM Plex Sans Arabic"'); } catch(e) {}
+  try { await document.fonts.load('600 14px "IBM Plex Sans Arabic"'); } catch(e) {}
+  try { await document.fonts.load('400 12px "IBM Plex Sans Arabic"'); } catch(e) {}
+
+  await new Promise(r => setTimeout(r, 500));
   Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
-  await new Promise(r => setTimeout(r, 700));
+  await new Promise(r => setTimeout(r, 900));
 
   try {
     const { jsPDF } = window.jspdf;
@@ -2574,11 +2593,17 @@ async function exportPdf(mode = 'mobile') {
             useCORS: true,
             windowWidth: refWidthPx,
             logging: false,
+            letterRendering: true,
+            imageTimeout: 15000,
+            allowTaint: false,
             // Capture the full element height even if it's scrollable
             height: block.scrollHeight,
             windowHeight: block.scrollHeight,
           });
-          imgs.push({ dataUrl: c.toDataURL('image/jpeg', 0.82), w: c.width, h: c.height });
+          const dataUrl = c.toDataURL('image/jpeg', 0.82);
+          imgs.push({ dataUrl, w: c.width, h: c.height });
+          // Free canvas memory immediately (important for large reports)
+          c.width = 0; c.height = 0;
         } catch (err) {
           console.warn('skip block', err);
         }
