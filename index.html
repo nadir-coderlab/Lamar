@@ -31,6 +31,24 @@
   @media (min-width: 600px) { .shell { padding: 18px 16px 60px; max-width: 480px; } }
   .header { text-align: center; padding: 6px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
   .header .logo { display: inline-flex; align-items: center; gap: 6px; color: var(--purple); font-size: 9px; letter-spacing: 0.15em; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
+  .main-title-block {
+    background: linear-gradient(135deg, rgba(139,124,229,0.12), rgba(110,196,247,0.08));
+    border: 1px solid rgba(139,124,229,0.3);
+    border-radius: 14px; padding: 16px 12px; margin: 10px 0 14px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .main-title-block::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+  }
+  .main-title { font-size: 19px; font-weight: 700; color: var(--text); margin: 0 0 3px; line-height: 1.3; letter-spacing: -0.01em; }
+  .main-subtitle { font-size: 13px; font-weight: 600; color: var(--purple-light); margin-bottom: 8px; letter-spacing: 0.02em; }
+  .main-tagline { font-size: 11.5px; color: var(--text); opacity: 0.85; font-weight: 500; padding-top: 8px; border-top: 1px solid rgba(139,124,229,0.2); }
+  @media (min-width: 600px) {
+    .main-title { font-size: 22px; }
+    .main-subtitle { font-size: 14px; }
+    .main-tagline { font-size: 12.5px; }
+  }
   .header h1 { font-size: 16px; font-weight: 600; margin-bottom: 4px; line-height: 1.35; }
   .header .sub { color: var(--muted); font-size: 11px; margin-bottom: 10px; }
   .header-bar { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; }
@@ -39,6 +57,11 @@
   .btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--text); transition: all 0.15s; }
   .btn:active { transform: scale(0.97); }
   .btn-danger { background: rgba(255,123,138,0.1); border-color: rgba(255,123,138,0.3); color: var(--red); }
+  .results-btn {
+    background: linear-gradient(135deg, rgba(139,124,229,0.15), rgba(110,196,247,0.1));
+    border-color: rgba(139,124,229,0.4); color: var(--purple-light); font-weight: 600;
+  }
+  .results-btn:hover { background: linear-gradient(135deg, rgba(139,124,229,0.25), rgba(110,196,247,0.18)); }
   .btn-primary { background: linear-gradient(135deg, var(--purple), #7c6cd9); border-color: transparent; color: white; font-weight: 600; padding: 11px 24px; font-size: 12.5px; }
   .export-wrap { position: relative; display: inline-block; }
   .export-menu { position: absolute; top: 100%; left: 0; margin-top: 6px; background: var(--surface); border: 1px solid var(--border-2); border-radius: 10px; padding: 6px; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 100; display: none; }
@@ -70,7 +93,45 @@
   .section { margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; }
   .section .bar { width: 3px; height: 16px; border-radius: 2px; background: var(--c, var(--purple)); flex-shrink: 0; }
   .section h2 { font-size: 13.5px; font-weight: 600; }
-  .section .desc { font-size: 10.5px; color: var(--muted); margin-right: auto; }
+  .section .desc { font-size: 10.5px; color: var(--text); opacity: 0.85; margin-right: auto; }
+  .details-btn {
+    margin-right: auto; display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 11px; background: linear-gradient(135deg, var(--red), #e8616f);
+    border: none; border-radius: 7px; color: white; font-family: inherit;
+    font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(255,123,138,0.3);
+  }
+  .details-btn:active { transform: scale(0.96); }
+  .details-btn:hover { box-shadow: 0 3px 12px rgba(255,123,138,0.45); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px); z-index: 1000; display: none;
+    align-items: flex-start; justify-content: center; padding: 0;
+    overflow-y: auto;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-content {
+    background: var(--bg); width: 100%; max-width: 440px;
+    min-height: 100vh; border-radius: 0;
+    border: none; display: flex; flex-direction: column;
+    padding: 0;
+  }
+  @media (min-width: 600px) {
+    .modal-content { max-width: 480px; }
+  }
+  .modal-header {
+    position: sticky; top: 0; background: var(--surface);
+    border-bottom: 1px solid var(--border-2); padding: 14px 12px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 10px; z-index: 5;
+  }
+  .modal-header h2 { font-size: 14.5px; font-weight: 600; margin-bottom: 3px; }
+  .modal-header p { font-size: 10.5px; color: var(--muted); }
+  .modal-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .modal-close-btn { padding: 6px 10px; font-size: 14px; line-height: 1; }
+  .modal-body { padding: 14px 12px 50px; }
   .hero { background: linear-gradient(135deg, var(--surface), var(--surface-2)); border: 1px solid var(--border); border-radius: 12px; padding: 16px 14px; margin-bottom: 10px; position: relative; overflow: hidden; }
   .hero::before { content: ''; position: absolute; right: 0; top: 0; width: 4px; height: 100%; background: var(--c, var(--green)); }
   .hero h3 { font-size: 11.5px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
@@ -194,6 +255,7 @@
   body.pdf-mode .section { margin: 12px 0 6px !important; }
   body.pdf-mode .search { display: none !important; }
   body.pdf-mode .tabs { display: none !important; }
+  body.pdf-mode .details-btn { display: none !important; }
   body.pdf-desktop .shell { max-width: 1080px !important; padding: 14px 16px !important; }
   body.pdf-desktop .chart-box { height: 320px !important; }
   body.pdf-desktop .chart-box.xtall { height: 480px !important; }
@@ -213,12 +275,18 @@
 <div class="shell" id="rootShell">
   <div class="header">
     <div class="logo"><span>UNIFIED LAB CENTER</span></div>
+    <div class="main-title-block">
+      <h1 class="main-title">الخدمات الصحية المساندة</h1>
+      <div class="main-subtitle">الرصد والتحليل</div>
+      <div class="main-tagline">تقرير حالة المراكز والمختبرات</div>
+    </div>
     <h1>مركز الفحوصات الموحد</h1>
     <div class="sub">تقرير شامل لمقارنة المراكز والفحوصات</div>
     <div class="header-bar">
       <span class="pill"><span class="dot"></span> جاهز</span>
       <span class="pill mono" id="datePill">—</span>
       <button class="btn btn-danger" id="reloadBtn" style="display:none">⟳ ملف جديد</button>
+      <button class="btn results-btn" id="openResultsAnalysis" style="display:none">📊 تحليل النتائج</button>
       <div class="export-wrap" id="exportWrap" style="display:none">
         <button class="btn btn-danger" id="pdfBtn">⤓ تصدير PDF</button>
         <div class="export-menu" id="exportMenu">
@@ -272,7 +340,6 @@
     <div class="section" style="--c: var(--blue)"><span class="bar"></span><h2>مقارنة أحجام المراكز</h2><span class="desc">كم عينة لكل مركز</span></div>
     <div class="card"><div class="card-head"><h3>أعلى المراكز بعدد العينات</h3><p>أعلى ١٥ مركز نشاطاً</p></div><div class="chart-box xtall"><canvas id="topPhcChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعلى المراكز بعدد المرضى</h3><p>أكثر المراكز خدمة للمرضى</p></div><div class="chart-box xtall"><canvas id="topPatientsChart"></canvas></div></div>
-    <div class="card"><div class="card-head"><h3>متوسط العينات لكل مريض</h3><p>هل المريض يأتي بعينة واحدة أم عدة؟</p></div><div class="chart-box xtall"><canvas id="samplesPerPatientChart"></canvas></div></div>
 
     <!-- 3) نقل العينات -->
     <div class="section" style="--c: var(--orange)"><span class="bar"></span><h2>نقل العينات</h2><span class="desc">الالتزام بـ ٤.٥ ساعة</span></div>
@@ -281,11 +348,10 @@
     <div class="card"><div class="card-head"><h3>أقل المراكز التزاماً</h3><p>في وصول العينات خلال ٤.٥ ساعة من السحب — تحتاج تدخل</p></div><div class="chart-box xtall"><canvas id="worstComplianceChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعلى المراكز التزاماً</h3><p>في وصول العينات خلال ٤.٥ ساعة من السحب — نماذج يُحتذى بها</p></div><div class="chart-box xtall"><canvas id="bestComplianceChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>أعداد العينات المتأخرة</h3><p>تجاوزت ٤.٥ ساعة — أعلى ١٥ مركز</p></div><div class="chart-box xtall"><canvas id="overTargetChart"></canvas></div></div>
-    <div class="card"><div class="card-head"><h3>أعلى مدة وصول مسجلة</h3><p>أسوأ حالة في كل مركز</p></div><div class="chart-box xtall"><canvas id="worstCaseChart"></canvas></div></div>
     <div class="card"><div class="card-head"><h3>توزيع المراكز حسب الالتزام</h3><p>كم مركز عند كل مستوى</p></div><div class="chart-box"><canvas id="phcComplianceChart"></canvas></div></div>
 
     <!-- 3.5) العينات المفقودة بالمراكز -->
-    <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>العينات المفقودة بالمراكز</h2><span class="desc">تم تجميعها بالنظام دون إرسالها للمختبر</span></div>
+    <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>العينات المفقودة بالمراكز</h2><span class="desc">تم تجميعها في النظام بدون وجود عينة فعلية</span></div>
 
     <div class="hero" id="lostHero"></div>
 
@@ -309,7 +375,7 @@
       <input type="text" class="search" id="lostSearch" placeholder="🔍 ابحث عن مركز…" />
       <div class="table-wrap"><div class="table-scroll">
         <table id="lostTable">
-          <thead><tr><th>#</th><th>المركز</th><th>إجمالي العينات</th><th>المفقودة</th><th>نسبة الفقد</th><th>أيام الذروة</th><th>أقدم عينة</th></tr></thead>
+          <thead><tr><th>#</th><th>المركز</th><th>إجمالي العينات</th><th>المفقودة</th><th>نسبة الفقد</th><th>يوم الذروة</th></tr></thead>
           <tbody></tbody>
         </table>
       </div></div>
@@ -344,7 +410,7 @@
       <input type="text" class="search" id="rejSearch" placeholder="🔍 ابحث عن مركز…" />
       <div class="table-wrap"><div class="table-scroll">
         <table id="rejTable">
-          <thead><tr><th>#</th><th>المركز</th><th>إجمالي العينات</th><th>المرفوضة</th><th>نسبة الرفض</th><th>السبب الأعلى</th></tr></thead>
+          <thead><tr><th>#</th><th>المركز</th><th>إجمالي العينات</th><th>المرفوضة</th><th>نسبة الرفض</th><th>يوم الذروة</th></tr></thead>
           <tbody></tbody>
         </table>
       </div></div>
@@ -366,12 +432,14 @@
     <div class="section" style="--c: var(--pink)"><span class="bar"></span><h2>تصنيف المراكز</h2><span class="desc">حسب الالتزام</span></div>
     <div class="card"><div class="card-head"><h3>تصنيف المراكز حسب الأداء</h3><p>حسب الالتزام بهدف ٤.٥ ساعة</p></div><div class="tier-grid" id="tierList"></div></div>
 
-    <!-- 6) FREE TESTS SECTION -->
-    <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>تحليل الفحوصات</h2><span class="desc">مؤشرات الاختبارات</span></div>
+    <!-- 6) تحليل الفحوصات — قسم مختصر بدون نتائج -->
+    <div class="section" style="--c: var(--red)">
+      <span class="bar"></span>
+      <h2>تحليل الفحوصات</h2>
+      <span class="desc">الفحوصات الأكثر طلباً</span>
+    </div>
 
     <div class="kpi-row" id="testsKpis"></div>
-
-    <div id="criticalTestAlerts"></div>
 
     <div class="card">
       <div class="card-head"><h3>أكثر الفحوصات طلباً</h3><p>أعلى ١٥ فحص حسب عدد العينات</p></div>
@@ -379,45 +447,15 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><h3>الفحوصات الأكثر خروجاً عن المعدل</h3><p>أعلى نسبة "غير طبيعي" (طلبت ٥٠+ مرة)</p></div>
-      <div class="chart-box xtall"><canvas id="testAbRateChart"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h3>الفحوصات حسب نمط الخلل</h3><p>طبيعي · مرتفع · منخفض — أعلى ١٢ فحص بالنتائج</p></div>
-      <div class="chart-box xtall"><canvas id="testResultsChart"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h3>تفصيل النتائج لكل فحص</h3><p>طبيعي / مرتفع / منخفض — كل فحص</p></div>
-      <input type="text" class="search" id="testBdSearch" placeholder="🔍 ابحث عن فحص…" />
-      <div class="table-scroll" style="max-height:540px" id="testBreakdown"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h3>توزيع النتائج إجمالاً</h3><p>طبيعي vs مرتفع vs منخفض على مستوى المركز</p></div>
-      <div class="chart-box"><canvas id="overallResultsChart"></canvas></div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h3>جدول الفحوصات <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="testCount"></span></h3><p>تفاصيل كل فحص</p></div>
+      <div class="card-head"><h3>جدول الفحوصات الأكثر طلباً <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="testCount"></span></h3><p>عدد العينات لكل فحص</p></div>
       <input type="text" class="search" id="testTableSearch" placeholder="🔍 ابحث…" />
       <div class="table-wrap"><div class="table-scroll" style="max-height:400px" data-test-table>
         <table id="testsTable">
-          <thead><tr><th>#</th><th>الفحص</th><th>عينات</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th></tr></thead>
+          <thead><tr><th>#</th><th>الفحص</th><th>عدد العينات</th></tr></thead>
           <tbody></tbody>
         </table>
       </div></div>
     </div>
-
-    <!-- 7) النتائج حسب المركز -->
-    <div class="section" style="--c: var(--green)"><span class="bar"></span><h2>النتائج حسب المركز</h2><span class="desc">مقارنة المراكز</span></div>
-    <div class="card"><div class="card-head"><h3>نتائج الفحوصات حسب المركز</h3><p>توزيع طبيعي / مرتفع / منخفض — أعلى ١٥</p></div><div class="chart-box xtall"><canvas id="resultsByPhcChart"></canvas></div></div>
-    <div class="card"><div class="card-head"><h3>نسبة خارج المعدل لكل مركز</h3><p>قد يحتاج مراجعة فئات المرضى أو دقة العينات</p></div><div class="chart-box xtall"><canvas id="abByPhcChart"></canvas></div></div>
-
-    <!-- 8) إعادات -->
-    <div class="section" style="--c: var(--blue)"><span class="bar"></span><h2>إعادة الفحوصات</h2><span class="desc">حسب المركز</span></div>
-    <div class="card"><div class="card-head"><h3>أعلى المراكز في إعادة الفحوصات</h3><p>عدد حالات إعادة فحص نفس المريض</p></div><div class="chart-box xtall"><canvas id="repByPhcChart"></canvas></div></div>
 
     <!-- 9) الجدول -->
     <div class="section" style="--c: var(--purple)"><span class="bar"></span><h2>الجدول الشامل</h2><span class="desc">كل المراكز</span></div>
@@ -432,7 +470,7 @@
       <input type="text" class="search" id="phcSearch" placeholder="🔍 ابحث عن مركز…" />
       <div class="table-wrap"><div class="table-scroll">
         <table id="phcTable">
-          <thead><tr><th>#</th><th>المركز</th><th>عينات</th><th>مرضى</th><th>الالتزام</th><th>متوسط</th><th>وسيط</th><th>أعلى</th><th>متأخرة</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th><th>إعادات</th><th>تقييم</th></tr></thead>
+          <thead><tr><th>#</th><th>المركز</th><th>عينات</th><th>مرضى</th><th>الالتزام</th><th>متوسط</th><th>أعلى</th><th>متأخرة</th><th>إعادات</th><th>تقييم</th></tr></thead>
           <tbody></tbody>
         </table>
       </div></div>
@@ -440,9 +478,152 @@
 
     <!-- 10) الخلاصات -->
     <div class="section" style="--c: var(--purple-light)"><span class="bar"></span><h2>الخلاصات</h2><span class="desc">جاهزة للعرض</span></div>
-    <div class="card"><div class="card-head"><h3>أبرز الملاحظات</h3><p>تحليل تلقائي للأنماط</p></div><div class="insights-grid" id="insights"></div></div>
+    <div class="card"><div class="card-head"><h3>أبرز الملاحظات</h3></div><div class="insights-grid" id="insights"></div></div>
 
     <footer><div id="footerInfo">مركز الفحوصات الموحد</div><div class="mono" id="footerStats"></div></footer>
+  </div>
+</div>
+
+<!-- MODAL: تفاصيل نتائج الفحوصات -->
+<div class="modal-overlay" id="testsModal">
+  <div class="modal-content" id="testsModalContent">
+    <div class="modal-header">
+      <div>
+        <h2>تحليل النتائج التفصيلي</h2>
+        <p>تقرير منفصل ومستقل لنتائج الفحوصات</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-danger" id="modalPdfBtn">⤓ تصدير PDF</button>
+        <button class="btn modal-close-btn" id="closeTestsModal">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="testsModalBody">
+      <div class="kpi-row" id="resultsKpis"></div>
+      <div id="criticalTestAlerts"></div>
+
+      <!-- 1. نظرة عامة -->
+      <div class="section" style="--c: var(--green)"><span class="bar"></span><h2>نظرة عامة</h2></div>
+
+      <div class="card">
+        <div class="card-head"><h3>توزيع جميع النتائج</h3><p>إجمالي النتائج الطبيعية vs غير الطبيعية</p></div>
+        <div class="chart-box"><canvas id="overallResultsChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>توزيع غير الطبيعية</h3><p>المرتفعة vs المنخفضة</p></div>
+        <div class="chart-box"><canvas id="abnormalSplitChart"></canvas></div>
+      </div>
+
+      <!-- 2. تحليل الفحوصات -->
+      <div class="section" style="--c: var(--red)"><span class="bar"></span><h2>تحليل الفحوصات</h2></div>
+
+      <div class="card">
+        <div class="card-head"><h3>الفحوصات الأكثر خروجاً عن المعدل</h3><p>أعلى نسبة غير طبيعي (طُلبت ٥٠+ مرة)</p></div>
+        <div class="chart-box xtall"><canvas id="testAbRateChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>أكثر الفحوصات نتائج مرتفعة</h3><p>أعلى نسبة "مرتفع" بين الفحوصات</p></div>
+        <div class="chart-box xtall"><canvas id="testHighRateChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>أكثر الفحوصات نتائج منخفضة</h3><p>أعلى نسبة "منخفض" بين الفحوصات</p></div>
+        <div class="chart-box xtall"><canvas id="testLowRateChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>الفحوصات حسب نمط النتائج</h3><p>طبيعي · مرتفع · منخفض — أعلى ١٢ فحص</p></div>
+        <div class="chart-box xtall"><canvas id="testResultsChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>الفحوصات الأكثر طبيعية</h3><p>أعلى نسبة نتائج ضمن المعدل الطبيعي</p></div>
+        <div class="chart-box xtall"><canvas id="testNormalRateChart"></canvas></div>
+      </div>
+
+      <!-- 3. تحليل المراكز -->
+      <div class="section" style="--c: var(--blue)"><span class="bar"></span><h2>تحليل المراكز</h2></div>
+
+      <div class="card">
+        <div class="card-head"><h3>نتائج المراكز — توزيع كامل</h3><p>طبيعي / مرتفع / منخفض — أعلى ١٥ مركز</p></div>
+        <div class="chart-box xtall"><canvas id="resultsByPhcChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>أعلى المراكز في نسبة خارج المعدل</h3><p>قد يحتاج مراجعة فئات المرضى أو دقة العينات</p></div>
+        <div class="chart-box xtall"><canvas id="abByPhcChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>أقل المراكز في نسبة خارج المعدل</h3><p>المراكز ذات أعلى نسبة نتائج طبيعية</p></div>
+        <div class="chart-box xtall"><canvas id="bestAbByPhcChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>أعلى المراكز في النتائج المرتفعة</h3><p>نسبة المرتفعة من إجمالي نتائج المركز</p></div>
+        <div class="chart-box xtall"><canvas id="highByPhcChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>أعلى المراكز في النتائج المنخفضة</h3><p>نسبة المنخفضة من إجمالي نتائج المركز</p></div>
+        <div class="chart-box xtall"><canvas id="lowByPhcChart"></canvas></div>
+      </div>
+
+      <!-- 4. مقارنات -->
+      <div class="section" style="--c: var(--orange)"><span class="bar"></span><h2>مقارنات وأنماط</h2></div>
+
+      <div class="card">
+        <div class="card-head"><h3>المرتفعة vs المنخفضة في الفحوصات</h3><p>توزيع نوع الخلل لأعلى ١٢ فحص</p></div>
+        <div class="chart-box xtall"><canvas id="highVsLowChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>الفحوصات الأكثر حجماً والأعلى خروجاً</h3><p>العلاقة بين عدد الطلب ونسبة الخلل</p></div>
+        <div class="chart-box xtall"><canvas id="volumeVsAbChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>توزيع المراكز حسب نسبة خارج المعدل</h3><p>كم مركز عند كل مستوى</p></div>
+        <div class="chart-box"><canvas id="phcAbDistChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>توزيع الفحوصات حسب نسبة خارج المعدل</h3><p>كم فحص عند كل مستوى</p></div>
+        <div class="chart-box"><canvas id="testAbDistChart"></canvas></div>
+      </div>
+
+      <!-- 5. الجداول -->
+      <div class="section" style="--c: var(--purple)"><span class="bar"></span><h2>الجداول التفصيلية</h2></div>
+
+      <div class="card">
+        <div class="card-head"><h3>تفصيل النتائج لكل فحص</h3><p>طبيعي / مرتفع / منخفض — كل فحص</p></div>
+        <input type="text" class="search" id="testBdSearch" placeholder="🔍 ابحث عن فحص…" />
+        <div class="table-scroll" style="max-height:540px" id="testBreakdown"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>جدول الفحوصات بالتفصيل <span class="mono" style="color:var(--muted); font-weight:400; font-size:10.5px;" id="testCountFull"></span></h3><p>كل فحص مع نتائجه</p></div>
+        <input type="text" class="search" id="testFullSearch" placeholder="🔍 ابحث…" />
+        <div class="table-wrap"><div class="table-scroll" style="max-height:400px">
+          <table id="testsFullTable">
+            <thead><tr><th>#</th><th>الفحص</th><th>عينات</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>جدول المراكز — تفاصيل النتائج</h3><p>كل مركز ونتائجه</p></div>
+        <input type="text" class="search" id="phcResultsSearch" placeholder="🔍 ابحث عن مركز…" />
+        <div class="table-wrap"><div class="table-scroll" style="max-height:500px">
+          <table id="phcResultsTable">
+            <thead><tr><th>#</th><th>المركز</th><th>إجمالي نتائج</th><th>طبيعي</th><th>مرتفع</th><th>منخفض</th><th>% خارج</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -649,6 +830,7 @@ async function handleFile(file) {
     document.getElementById('upload-section').classList.add('hide');
     document.getElementById('app').classList.add('show');
     document.getElementById('reloadBtn').style.display = 'inline-flex';
+    document.getElementById('openResultsAnalysis').style.display = 'inline-flex';
     document.getElementById('exportWrap').style.display = 'inline-block';
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     renderAll(an);
@@ -957,6 +1139,7 @@ function analyze(rows) {
     const rejInfo = rejMap.get(name) || { count: 0, cats: new Map(), days: new Map() };
     const peakDay = lostInfo.days.size ? [...lostInfo.days.entries()].sort((a,b) => b[1] - a[1])[0] : null;
     const topRejCat = rejInfo.cats.size ? [...rejInfo.cats.entries()].sort((a,b) => b[1] - a[1])[0] : null;
+    const rejPeakDay = rejInfo.days.size ? [...rejInfo.days.entries()].sort((a,b) => b[1] - a[1])[0] : null;
     const sampleCount = v.samples.size;
     const totalIncLost = sampleCount + lostInfo.count;
     return {
@@ -980,6 +1163,7 @@ function analyze(rows) {
       rej: rejInfo.count,
       rejPct: sampleCount > 0 ? (rejInfo.count / sampleCount * 100) : 0,
       rejTopCat: topRejCat ? { name: topRejCat[0], count: topRejCat[1] } : null,
+      rejPeakDay: rejPeakDay ? { day: rejPeakDay[0], count: rejPeakDay[1] } : null,
     };
   }).sort((a,b) => b.samples - a.samples);
 
@@ -1097,8 +1281,6 @@ function renderAll(a) {
   renderRejSection(a);
   renderTierList(a);
   renderTestsKpis(a);
-  renderCriticalTestAlerts(a);
-  renderTestBreakdown(a);
   renderTestsTable(a);
   renderInsights(a);
   renderPhcTable(a, 'all');
@@ -1116,7 +1298,7 @@ function renderKpis(a) {
     { c:'var(--purple)', l:'إجمالي العينات', v: fmt(s.samples), sub: `${fmt(s.patients)} مريض` },
     { c:'var(--blue)', l:'المراكز', v: fmt(s.centers), sub: `${a.eligible.length} نشط` },
     { c:'var(--green)', l:'متوسط يومي', v: fmt(dailyAvg), sub: 'عينة/يوم' },
-    { c: cl, l:'الالتزام', v: fmt1(ar.within)+'%', sub: `${fmt(ar.overTarget)} متأخرة` },
+    { c: cl, l:'الالتزام في إرسال العينات خلال ٤.٥ ساعات', v: fmt1(ar.within)+'%', sub: `${fmt(ar.overTarget)} متأخرة` },
   ];
   document.getElementById('kpisMain').innerHTML = k.map(x => `
     <div class="kpi" style="--c:${x.c}">
@@ -1138,7 +1320,6 @@ function renderHero(a) {
       <span>عينات <strong>${fmt(ar.count)}</strong></span>
       <span>متأخرة <strong>${fmt(ar.overTarget)}</strong></span>
       <span>متوسط <strong>${fmt2(ar.avg)}س</strong></span>
-      <span>وسيط <strong>${fmt2(ar.median)}س</strong></span>
     </div>`;
 }
 
@@ -1204,9 +1385,14 @@ function renderRejSection(a) {
   if (tblEl) {
     const sorted = [...phcs].filter(p => p.rej > 0).sort((x,y) => y.rej - x.rej);
     document.getElementById('rejCount').textContent = `${sorted.length} مركز`;
+    const arDayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
     tblEl.innerHTML = sorted.map((p, i) => {
       const pctCls = p.rejPct >= 5 ? 't-bad' : p.rejPct >= 2 ? 't-warn' : 't-good';
-      const topReason = p.rejTopCat ? `${p.rejTopCat.name} (${p.rejTopCat.count})` : '—';
+      let peak = '—';
+      if (p.rejPeakDay) {
+        const d = new Date(p.rejPeakDay.day + 'T00:00:00');
+        peak = `${arDayNames[d.getDay()]} (${p.rejPeakDay.count})`;
+      }
       return `
         <tr data-name="${p.name.toLowerCase()}">
           <td class="num">${i+1}</td>
@@ -1214,7 +1400,7 @@ function renderRejSection(a) {
           <td class="num">${fmt(p.samples)}</td>
           <td class="num t-bad">${fmt(p.rej)}</td>
           <td class="num ${pctCls}">${fmt1(p.rejPct)}%</td>
-          <td>${topReason}</td>
+          <td>${peak}</td>
         </tr>`;
     }).join('');
   }
@@ -1281,10 +1467,14 @@ function renderLostSection(a) {
   if (tblEl) {
     const sorted = [...phcs].filter(p => p.lost > 0).sort((x,y) => y.lost - x.lost);
     document.getElementById('lostCount').textContent = `${sorted.length} مركز`;
+    const arDayNames = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
     tblEl.innerHTML = sorted.map((p, i) => {
       const pctCls = p.lostPct >= 30 ? 't-bad' : p.lostPct >= 15 ? 't-warn' : 't-good';
-      const peak = p.lostPeakDay ? `${p.lostPeakDay.day.slice(5)} (${p.lostPeakDay.count})` : '—';
-      const oldest = p.lostOldest ? p.lostOldest.toISOString().slice(5,10) : '—';
+      let peak = '—';
+      if (p.lostPeakDay) {
+        const d = new Date(p.lostPeakDay.day + 'T00:00:00');
+        peak = `${arDayNames[d.getDay()]} (${p.lostPeakDay.count})`;
+      }
       return `
         <tr data-name="${p.name.toLowerCase()}">
           <td class="num">${i+1}</td>
@@ -1292,8 +1482,7 @@ function renderLostSection(a) {
           <td class="num">${fmt(p.totalIncLost)}</td>
           <td class="num t-bad">${fmt(p.lost)}</td>
           <td class="num ${pctCls}">${fmt1(p.lostPct)}%</td>
-          <td class="num">${peak}</td>
-          <td class="num">${oldest}</td>
+          <td>${peak}</td>
         </tr>`;
     }).join('');
   }
@@ -1322,14 +1511,32 @@ function renderTierList(a) {
 function renderTestsKpis(a) {
   const s = a.s;
   const topTest = a.tests[0];
-  const mostAb = [...a.tests].filter(t => t.total >= 100).sort((x,y) => y.abPct - x.abPct)[0];
+  const top5Total = a.tests.slice(0, 5).reduce((sum, t) => sum + t.samples, 0);
   const k = [
-    { c:'var(--blue)', l:'أنواع الفحوصات', v: fmt(s.tests), sub: `${s.parameters} قياس فردي` },
+    { c:'var(--blue)', l:'أنواع الفحوصات', v: fmt(s.tests), sub: 'فحص مختلف' },
     { c:'var(--green)', l:'الأكثر طلباً', v: topTest ? fmt(topTest.samples) : '—', sub: topTest ? trunc(topTest.name, 18) : '—' },
-    { c:'var(--red)', l:'الأعلى في النتائج غير الطبيعية', v: mostAb ? fmt1(mostAb.abPct)+'%' : '—', sub: mostAb ? trunc(mostAb.name, 18) : '—' },
-    { c:'var(--orange)', l:'نسبة الإجمالي غير الطبيعي', v: fmt1(s.abRate)+'%', sub: `${fmt(s.high + s.low)} حالة` },
+    { c:'var(--purple)', l:'إجمالي الفحوصات', v: fmt(a.tests.reduce((sum, t) => sum + t.samples, 0)), sub: 'عينة عبر كل الفحوصات' },
+    { c:'var(--orange)', l:'حصة أعلى ٥ فحوصات', v: fmt(top5Total), sub: 'من إجمالي العينات' },
   ];
   document.getElementById('testsKpis').innerHTML = k.map(x => `
+    <div class="kpi" style="--c:${x.c}">
+      <div class="lbl">${x.l}</div>
+      <div class="val mono" style="color:${x.c}">${x.v}</div>
+      <div class="sub">${x.sub}</div>
+    </div>`).join('');
+}
+
+function renderResultsKpis(a) {
+  const s = a.s;
+  const mostAb = [...a.tests].filter(t => t.total >= 100).sort((x,y) => y.abPct - x.abPct)[0];
+  const k = [
+    { c:'var(--green)', l:'نتائج طبيعية', v: fmt(s.normal), sub: fmt1(s.normal/(s.totalCls||1)*100)+'%' },
+    { c:'var(--red)', l:'نتائج مرتفعة', v: fmt(s.high), sub: fmt1(s.high/(s.totalCls||1)*100)+'%' },
+    { c:'var(--orange)', l:'نتائج منخفضة', v: fmt(s.low), sub: fmt1(s.low/(s.totalCls||1)*100)+'%' },
+    { c:'var(--purple)', l:'الأعلى في النتائج غير الطبيعية', v: mostAb ? fmt1(mostAb.abPct)+'%' : '—', sub: mostAb ? trunc(mostAb.name, 18) : '—' },
+  ];
+  const el = document.getElementById('resultsKpis');
+  if (el) el.innerHTML = k.map(x => `
     <div class="kpi" style="--c:${x.c}">
       <div class="lbl">${x.l}</div>
       <div class="val mono" style="color:${x.c}">${x.v}</div>
@@ -1388,11 +1595,25 @@ function renderTestBreakdown(a) {
 }
 
 function renderTestsTable(a) {
+  // Main page: just test names and counts (no results)
+  const el = document.querySelector('#testsTable tbody');
   document.getElementById('testCount').textContent = `${a.tests.length} فحص`;
-  document.querySelector('#testsTable tbody').innerHTML = a.tests.map((t, i) => {
+  const maxSamples = a.tests[0]?.samples || 1;
+  if (el) el.innerHTML = a.tests.map((t, i) => `
+    <tr data-name="${t.name.toLowerCase()}">
+      <td class="num">${i+1}</td>
+      <td>${t.name}</td>
+      <td class="num bar-c"><div class="bg" style="width:${(t.samples/maxSamples)*100}%"></div><span>${fmt(t.samples)}</span></td>
+    </tr>`).join('');
+
+  // Modal: full table with results
+  const fullEl = document.querySelector('#testsFullTable tbody');
+  const fullCount = document.getElementById('testCountFull');
+  if (fullCount) fullCount.textContent = `${a.tests.length} فحص`;
+  if (fullEl) fullEl.innerHTML = a.tests.map((t, i) => {
     const abCls = t.abPct == null ? 't-na' : t.abPct > 30 ? 't-bad' : t.abPct > 15 ? 't-warn' : 't-good';
     return `
-      <tr data-name="${(t.name + ' ' + t.cat).toLowerCase()}">
+      <tr data-name="${t.name.toLowerCase()}">
         <td class="num">${i+1}</td>
         <td>${t.name}</td>
         <td class="num">${fmt(t.samples)}</td>
@@ -1407,47 +1628,32 @@ function renderTestsTable(a) {
 function renderInsights(a) {
   const ar = a.s.arrivalStats;
   const ins = [];
-  ins.push({ c: ar.within >= 90 ? 'var(--green)' : 'var(--orange)', ic: ar.within >= 90 ? '✅' : '⚠', title:'الأداء العام', text:`${fmt1(ar.within)}% التزام بهدف ٤.٥ ساعة (${fmt(ar.overTarget)} عينة متأخرة).` });
+  ins.push({ c: ar.within >= 90 ? 'var(--green)' : 'var(--orange)', title:'الأداء العام', text:`${fmt1(ar.within)}% التزام بهدف ٤.٥ ساعة (${fmt(ar.overTarget)} عينة متأخرة).` });
   const mostSamples = a.phc[0];
-  if (mostSamples) ins.push({ c:'var(--blue)', ic:'📈', title:'الأعلى نشاطاً', text:`${shortName(mostSamples.name)} — ${fmt(mostSamples.samples)} عينة (${fmt(mostSamples.patients)} مريض).` });
+  if (mostSamples) ins.push({ c:'var(--blue)', title:'الأعلى نشاطاً', text:`${shortName(mostSamples.name)} — ${fmt(mostSamples.samples)} عينة (${fmt(mostSamples.patients)} مريض).` });
   const worst = [...a.eligible].sort((x,y) => x.within - y.within)[0];
-  if (worst) ins.push({ c:'var(--red)', ic:'🚨', title:'الأقل التزاماً', text:`${shortName(worst.name)} — ${fmt1(worst.within)}% فقط (متوسط ${fmt2(worst.avg)}س).` });
+  if (worst) ins.push({ c:'var(--red)', title:'الأقل التزاماً', text:`${shortName(worst.name)} — ${fmt1(worst.within)}% فقط (متوسط ${fmt2(worst.avg)}س).` });
   const best = [...a.eligible].sort((x,y) => y.within - x.within)[0];
-  if (best) ins.push({ c:'var(--green)', ic:'⭐', title:'الأعلى التزاماً', text:`${shortName(best.name)} — ${fmt1(best.within)}% (متوسط ${fmt2(best.avg)}س).` });
+  if (best) ins.push({ c:'var(--green)', title:'الأعلى التزاماً', text:`${shortName(best.name)} — ${fmt1(best.within)}% (متوسط ${fmt2(best.avg)}س).` });
 
-  // Test-related insights
   const topTest = a.tests[0];
-  if (topTest) ins.push({ c:'var(--blue)', ic:'🔬', title:'الفحص الأكثر طلباً', text:`${topTest.name} — ${fmt(topTest.samples)} عينة.` });
-  const topAbTest = [...a.tests].filter(t => t.total >= 100).sort((x,y) => y.abPct - x.abPct)[0];
-  if (topAbTest) ins.push({ c:'var(--red)', ic:'📊', title:'أعلى فحص في خارج المعدل', text:`${topAbTest.name} — ${fmt1(topAbTest.abPct)}% خارج المعدل.` });
+  if (topTest) ins.push({ c:'var(--blue)', title:'الفحص الأكثر طلباً', text:`${topTest.name} — ${fmt(topTest.samples)} عينة.` });
 
   const mostOver = [...a.eligible].sort((x,y) => y.overTarget - x.overTarget)[0];
-  if (mostOver) ins.push({ c:'var(--orange)', ic:'⏳', title:'الأكثر تأخراً', text:`${shortName(mostOver.name)} — ${fmt(mostOver.overTarget)} عينة تجاوزت ٤.٥ ساعة.` });
-
-  const mostRep = [...a.phc].sort((x,y) => y.repeats - x.repeats)[0];
-  if (mostRep && mostRep.repeats > 0) ins.push({ c:'var(--yellow)', ic:'🔁', title:'الأكثر إعادة', text:`${shortName(mostRep.name)} — ${fmt(mostRep.repeats)} حالة إعادة سحب.` });
+  if (mostOver) ins.push({ c:'var(--orange)', title:'الأكثر تأخراً', text:`${shortName(mostOver.name)} — ${fmt(mostOver.overTarget)} عينة تجاوزت ٤.٥ ساعة.` });
 
   // Lost samples insights
   if (a.s.lostTotal > 0) {
-    ins.push({ c:'var(--red)', ic:'⚠', title:'العينات المفقودة', text:`${fmt(a.s.lostTotal)} عينة تم تجميعها بالنظام دون إرسالها للمختبر.` });
+    ins.push({ c:'var(--red)', title:'العينات المفقودة', text:`${fmt(a.s.lostTotal)} عينة تم تجميعها في النظام بدون وجود عينة فعلية.` });
     const worstLost = [...a.phc].filter(p => p.lost > 0).sort((x,y) => y.lostPct - x.lostPct)[0];
-    if (worstLost) ins.push({ c:'var(--orange)', ic:'📦', title:'الأعلى في نسبة الفقد', text:`${shortName(worstLost.name)} — ${fmt1(worstLost.lostPct)}% من عيناته مفقودة (${fmt(worstLost.lost)} عينة).` });
-  }
-
-  // Rejected samples insights
-  if (a.s.rejTotal > 0) {
-    const topCat = a.rejByCat && a.rejByCat[0];
-    ins.push({ c:'var(--orange)', ic:'❌', title:'العينات المرفوضة', text:`${fmt(a.s.rejTotal)} عينة مرفوضة${topCat ? ` — السبب الأعلى: ${topCat[0]} (${fmt(topCat[1])} حالة)` : ''}.` });
-    const worstRej = [...a.phc].filter(p => p.rej > 0 && p.samples >= 50).sort((x,y) => y.rejPct - x.rejPct)[0];
-    if (worstRej) ins.push({ c:'var(--red)', ic:'⚠', title:'الأعلى في نسبة الرفض', text:`${shortName(worstRej.name)} — ${fmt1(worstRej.rejPct)}% (${fmt(worstRej.rej)} عينة).` });
+    if (worstLost) ins.push({ c:'var(--orange)', title:'الأعلى في نسبة الفقد', text:`${shortName(worstLost.name)} — ${fmt1(worstLost.lostPct)}% من عيناته مفقودة (${fmt(worstLost.lost)} عينة).` });
   }
 
   const busyIdx = a.weekdayOrdered.indexOf(Math.max(...a.weekdayOrdered));
-  ins.push({ c:'var(--purple)', ic:'📅', title:'أعلى أيام النشاط', text:`${a.dayLabels[busyIdx]} — ${fmt(a.weekdayOrdered[busyIdx])} عينة.` });
+  ins.push({ c:'var(--purple)', title:'أعلى أيام النشاط', text:`${a.dayLabels[busyIdx]} — ${fmt(a.weekdayOrdered[busyIdx])} عينة.` });
 
   document.getElementById('insights').innerHTML = ins.map(i => `
     <div class="insight" style="--c:${i.c}">
-      <div class="ic">${i.ic}</div>
       <div><h5>${i.title}</h5><p>${i.text}</p></div>
     </div>`).join('');
 }
@@ -1494,13 +1700,6 @@ function renderAllCharts(a) {
     options: hBarOpts(' مريض')
   });
 
-  const spp = [...a.phc].filter(p => p.patients >= 20).sort((x,y) => y.samplesPerPatient - x.samplesPerPatient).slice(0, 15);
-  STATE.charts.spp = new Chart(document.getElementById('samplesPerPatientChart'), {
-    type: 'bar',
-    data: { labels: spp.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: spp.map(p => p.samplesPerPatient), backgroundColor: ctx => gradH(ctx, 'rgba(126,224,184,0.95)', 'rgba(126,224,184,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
-    options: hBarOpts(' عينة/مريض')
-  });
-
   const arrTop = a.phc.slice(0, 15);
   STATE.charts.arrCombo = new Chart(document.getElementById('arrivalComboChart'), {
     type: 'bar',
@@ -1541,13 +1740,6 @@ function renderAllCharts(a) {
     type: 'bar',
     data: { labels: overTarget.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: overTarget.map(p => p.overTarget), backgroundColor: ctx => gradH(ctx, 'rgba(255,176,102,0.95)', 'rgba(255,176,102,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
     options: hBarOpts(' عينة')
-  });
-
-  const worstCase = [...eligible].sort((x,y) => y.worst - x.worst).slice(0, 15);
-  STATE.charts.worstCase = new Chart(document.getElementById('worstCaseChart'), {
-    type: 'bar',
-    data: { labels: worstCase.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: worstCase.map(p => p.worst), backgroundColor: ctx => gradH(ctx, 'rgba(245,163,199,0.95)', 'rgba(245,163,199,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
-    options: hBarOpts(' س')
   });
 
   const buckets = {
@@ -1671,77 +1863,12 @@ function renderAllCharts(a) {
     });
   }
 
-  // ========== TESTS CHARTS ==========
+  // ========== TESTS CHARTS (main page: only top tests) ==========
   const topTests = a.tests.slice(0, 15);
   STATE.charts.topTests = new Chart(document.getElementById('topTestsChart'), {
     type: 'bar',
     data: { labels: topTests.map(t => trunc(t.name, 22)), datasets: [{ data: topTests.map(t => t.samples), backgroundColor: ctx => gradH(ctx, 'rgba(126,224,184,0.95)', 'rgba(126,224,184,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
     options: hBarOpts(' عينة')
-  });
-
-  const abTests = [...a.tests].filter(t => t.total >= 50 && t.abPct != null).sort((x,y) => y.abPct - x.abPct).slice(0, 15);
-  STATE.charts.testAbRate = new Chart(document.getElementById('testAbRateChart'), {
-    type: 'bar',
-    data: { labels: abTests.map(t => trunc(t.name, 22)), datasets: [{ data: abTests.map(t => t.abPct), backgroundColor: abTests.map(t => t.abPct > 50 ? C.red : t.abPct > 25 ? C.orange : C.blue), borderRadius: 4, maxBarThickness: 14 }] },
-    options: { ...hBarOpts('%'), scales: { ...hBarOpts().scales, x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
-  });
-
-  // Stacked test results
-  const stackedTests = [...a.tests].filter(t => t.total > 0).sort((x,y) => y.total - x.total).slice(0, 12);
-  STATE.charts.testResults = new Chart(document.getElementById('testResultsChart'), {
-    type: 'bar',
-    data: {
-      labels: stackedTests.map(t => trunc(t.name, 22)),
-      datasets: [
-        { label:'طبيعي', data: stackedTests.map(t => t.n), backgroundColor: C.green, borderRadius: 2 },
-        { label:'مرتفع', data: stackedTests.map(t => t.h), backgroundColor: C.red, borderRadius: 2 },
-        { label:'منخفض', data: stackedTests.map(t => t.l), backgroundColor: C.orange, borderRadius: 2 },
-      ]
-    },
-    options: {
-      indexAxis: 'y',
-      plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 9, boxHeight: 9, padding: 6 } }, tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7 } },
-      scales: { x: { stacked: true, grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} }, y: { stacked: true, grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} } }
-    }
-  });
-
-  // Overall results
-  STATE.charts.overallResults = new Chart(document.getElementById('overallResultsChart'), {
-    type: 'doughnut',
-    data: { labels: ['طبيعي','مرتفع','منخفض'], datasets: [{ data: [a.s.normal, a.s.high, a.s.low], backgroundColor: [C.green, C.red, C.orange], borderColor:'#151b2f', borderWidth: 2 }] },
-    options: { cutout:'60%', plugins: { legend: { position:'bottom', labels: { font: { size: 10.5 }, color: C.muted, boxWidth: 10, boxHeight: 10, padding: 8 } }, tooltip: { callbacks: { label: c => `${c.label}: ${fmt(c.parsed)}` } } } }
-  });
-
-  const topByResults = [...a.phc].filter(p => p.total > 0).sort((x,y) => y.total - x.total).slice(0, 15);
-  STATE.charts.resultsByPhc = new Chart(document.getElementById('resultsByPhcChart'), {
-    type: 'bar',
-    data: {
-      labels: topByResults.map(p => trunc(shortName(p.name), 22)),
-      datasets: [
-        { label:'طبيعي', data: topByResults.map(p => p.n), backgroundColor: C.green, borderRadius: 2 },
-        { label:'مرتفع', data: topByResults.map(p => p.h), backgroundColor: C.red, borderRadius: 2 },
-        { label:'منخفض', data: topByResults.map(p => p.l), backgroundColor: C.orange, borderRadius: 2 },
-      ]
-    },
-    options: {
-      indexAxis: 'y',
-      plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 9, boxHeight: 9, padding: 6 } }, tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7 } },
-      scales: { x: { stacked: true, grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} }, y: { stacked: true, grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} } }
-    }
-  });
-
-  const abRanked = [...a.phc].filter(p => p.abPct != null && p.total >= 100).sort((x,y) => y.abPct - x.abPct).slice(0, 15);
-  STATE.charts.abByPhc = new Chart(document.getElementById('abByPhcChart'), {
-    type: 'bar',
-    data: { labels: abRanked.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: abRanked.map(p => p.abPct), backgroundColor: abRanked.map(p => p.abPct > 30 ? C.red : p.abPct > 20 ? C.orange : C.blue), borderRadius: 4, maxBarThickness: 14 }] },
-    options: { ...hBarOpts('%'), scales: { ...hBarOpts().scales, x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
-  });
-
-  const repsRanked = [...a.phc].filter(p => p.repeats > 0).sort((x,y) => y.repeats - x.repeats).slice(0, 15);
-  STATE.charts.repByPhc = new Chart(document.getElementById('repByPhcChart'), {
-    type: 'bar',
-    data: { labels: repsRanked.map(p => trunc(shortName(p.name), 22)), datasets: [{ data: repsRanked.map(p => p.repeats), backgroundColor: ctx => gradH(ctx, 'rgba(245,163,199,0.95)', 'rgba(245,163,199,0.3)'), borderRadius: 4, maxBarThickness: 14 }] },
-    options: hBarOpts(' حالة')
   });
 }
 
@@ -1761,7 +1888,6 @@ function renderPhcTable(a, filter) {
   document.querySelector('#phcTable tbody').innerHTML = arr.map((r, i) => {
     const wCls = r.within == null ? 't-na' : r.within >= 85 ? 't-good' : r.within >= 70 ? 't-warn' : 't-bad';
     const avgCls = r.avg == null ? 't-na' : r.avg <= 3 ? 't-good' : r.avg <= 4.5 ? 't-warn' : 't-bad';
-    const abCls = r.abPct == null ? 't-na' : r.abPct > 30 ? 't-bad' : r.abPct > 15 ? 't-warn' : 't-good';
     const rating = r.within == null ? '—' : r.within >= 95 ? '★★★★★' : r.within >= 85 ? '★★★★' : r.within >= 70 ? '★★★' : r.within >= 50 ? '★★' : '★';
     return `
       <tr data-name="${r.name.toLowerCase()}">
@@ -1771,13 +1897,8 @@ function renderPhcTable(a, filter) {
         <td class="num">${fmt(r.patients)}</td>
         <td class="num ${wCls}">${r.within == null ? '—' : fmt1(r.within)+'%'}</td>
         <td class="num ${avgCls}">${r.avg == null ? '—' : fmt2(r.avg)+'س'}</td>
-        <td class="num">${r.median == null ? '—' : fmt2(r.median)+'س'}</td>
         <td class="num ${r.worst > 24 ? 't-bad' : r.worst > 8 ? 't-warn' : ''}">${r.worst == null ? '—' : fmt2(r.worst)+'س'}</td>
         <td class="num ${r.overTarget > 50 ? 't-bad' : r.overTarget > 20 ? 't-warn' : ''}">${fmt(r.overTarget)}</td>
-        <td class="num t-n">${fmt(r.n)}</td>
-        <td class="num t-h">${fmt(r.h)}</td>
-        <td class="num t-l">${fmt(r.l)}</td>
-        <td class="num ${abCls}">${r.abPct == null ? '—' : fmt1(r.abPct)+'%'}</td>
         <td class="num">${fmt(r.repeats)}</td>
         <td class="rating">${rating}</td>
       </tr>`;
@@ -1811,10 +1932,489 @@ function attachTabs() {
   });
 }
 
+// ========== TESTS DETAILS MODAL ==========
+function renderResultsModalContent(a) {
+  renderResultsKpis(a);
+  renderCriticalTestAlerts(a);
+  renderTestBreakdown(a);
+  requestAnimationFrame(() => renderResultsCharts(a));
+  bindModalSearches();
+}
+
+function renderResultsCharts(a) {
+  // Destroy old result charts
+  ['overallResults','abnormalSplit','testAbRate','testHighRate','testLowRate','testResults','testNormalRate',
+   'resultsByPhc','abByPhc','bestAbByPhc','highByPhc','lowByPhc',
+   'highVsLow','volumeVsAb','phcAbDist','testAbDist'].forEach(k => {
+    try { STATE.charts[k]?.destroy?.(); } catch(e) {}
+    delete STATE.charts[k];
+  });
+
+  // 1. Overall results doughnut
+  const ov = document.getElementById('overallResultsChart');
+  if (ov) {
+    const abnormal = a.s.high + a.s.low;
+    STATE.charts.overallResults = new Chart(ov, {
+      type: 'doughnut',
+      data: { labels: ['طبيعي','غير طبيعي'],
+        datasets: [{ data: [a.s.normal, abnormal],
+          backgroundColor: [C.green, C.red], borderColor:'#151b2f', borderWidth: 2 }] },
+      options: { cutout:'60%',
+        plugins: { legend: { position:'bottom', labels: { font: { size: 11 }, color: C.muted, boxWidth: 11, boxHeight: 11, padding: 10 } },
+          tooltip: { callbacks: { label: c => `${c.label}: ${fmt(c.parsed)} (${fmt1(c.parsed/(a.s.totalCls||1)*100)}%)` } } } }
+    });
+  }
+
+  // 2. Abnormal split (high vs low)
+  const abs = document.getElementById('abnormalSplitChart');
+  if (abs) {
+    STATE.charts.abnormalSplit = new Chart(abs, {
+      type: 'doughnut',
+      data: { labels: ['مرتفع','منخفض'],
+        datasets: [{ data: [a.s.high, a.s.low],
+          backgroundColor: [C.red, C.orange], borderColor:'#151b2f', borderWidth: 2 }] },
+      options: { cutout:'60%',
+        plugins: { legend: { position:'bottom', labels: { font: { size: 11 }, color: C.muted, boxWidth: 11, boxHeight: 11, padding: 10 } },
+          tooltip: { callbacks: { label: c => `${c.label}: ${fmt(c.parsed)}` } } } }
+    });
+  }
+
+  // 3. Test abnormal rate (top 15)
+  const abTests = [...a.tests].filter(t => t.total >= 50 && t.abPct != null).sort((x,y) => y.abPct - x.abPct).slice(0, 15);
+  const abEl = document.getElementById('testAbRateChart');
+  if (abEl) {
+    STATE.charts.testAbRate = new Chart(abEl, {
+      type: 'bar',
+      data: { labels: abTests.map(t => trunc(t.name, 22)),
+        datasets: [{ data: abTests.map(t => t.abPct),
+          backgroundColor: abTests.map(t => t.abPct > 50 ? C.red : t.abPct > 25 ? C.orange : C.blue),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+
+  // 4. Test HIGH rate
+  const highTests = [...a.tests].filter(t => t.total >= 50).sort((x,y) => y.hPct - x.hPct).slice(0, 15);
+  const hEl = document.getElementById('testHighRateChart');
+  if (hEl) {
+    STATE.charts.testHighRate = new Chart(hEl, {
+      type: 'bar',
+      data: { labels: highTests.map(t => trunc(t.name, 22)),
+        datasets: [{ data: highTests.map(t => t.hPct),
+          backgroundColor: ctx => gradH(ctx, 'rgba(255,123,138,0.95)', 'rgba(255,123,138,0.3)'),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+
+  // 5. Test LOW rate
+  const lowTests = [...a.tests].filter(t => t.total >= 50).sort((x,y) => y.lPct - x.lPct).slice(0, 15);
+  const lEl = document.getElementById('testLowRateChart');
+  if (lEl) {
+    STATE.charts.testLowRate = new Chart(lEl, {
+      type: 'bar',
+      data: { labels: lowTests.map(t => trunc(t.name, 22)),
+        datasets: [{ data: lowTests.map(t => t.lPct),
+          backgroundColor: ctx => gradH(ctx, 'rgba(255,176,102,0.95)', 'rgba(255,176,102,0.3)'),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+
+  // 6. Stacked test results (top 12 by total)
+  const stackedTests = [...a.tests].filter(t => t.total > 0).sort((x,y) => y.total - x.total).slice(0, 12);
+  const resEl = document.getElementById('testResultsChart');
+  if (resEl) {
+    STATE.charts.testResults = new Chart(resEl, {
+      type: 'bar',
+      data: { labels: stackedTests.map(t => trunc(t.name, 22)),
+        datasets: [
+          { label:'طبيعي', data: stackedTests.map(t => t.n), backgroundColor: C.green, borderRadius: 2 },
+          { label:'مرتفع', data: stackedTests.map(t => t.h), backgroundColor: C.red, borderRadius: 2 },
+          { label:'منخفض', data: stackedTests.map(t => t.l), backgroundColor: C.orange, borderRadius: 2 },
+        ] },
+      options: { indexAxis: 'y',
+        plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 9, boxHeight: 9, padding: 6 } },
+          tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7 } },
+        scales: { x: { stacked: true, grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} },
+          y: { stacked: true, grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} } } }
+    });
+  }
+
+  // 7. Test NORMAL rate (highest normal %)
+  const normTests = [...a.tests].filter(t => t.total >= 50).sort((x,y) => y.nPct - x.nPct).slice(0, 15);
+  const nEl = document.getElementById('testNormalRateChart');
+  if (nEl) {
+    STATE.charts.testNormalRate = new Chart(nEl, {
+      type: 'bar',
+      data: { labels: normTests.map(t => trunc(t.name, 22)),
+        datasets: [{ data: normTests.map(t => t.nPct),
+          backgroundColor: ctx => gradH(ctx, 'rgba(126,224,184,0.95)', 'rgba(126,224,184,0.3)'),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'}, max: 100 } } }
+    });
+  }
+
+  // 8. Results by PHC stacked (top 15)
+  const topByResults = [...a.phc].filter(p => p.total > 0).sort((x,y) => y.total - x.total).slice(0, 15);
+  const rbpEl = document.getElementById('resultsByPhcChart');
+  if (rbpEl) {
+    STATE.charts.resultsByPhc = new Chart(rbpEl, {
+      type: 'bar',
+      data: { labels: topByResults.map(p => trunc(shortName(p.name), 22)),
+        datasets: [
+          { label:'طبيعي', data: topByResults.map(p => p.n), backgroundColor: C.green, borderRadius: 2 },
+          { label:'مرتفع', data: topByResults.map(p => p.h), backgroundColor: C.red, borderRadius: 2 },
+          { label:'منخفض', data: topByResults.map(p => p.l), backgroundColor: C.orange, borderRadius: 2 },
+        ] },
+      options: { indexAxis: 'y',
+        plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 9, boxHeight: 9, padding: 6 } },
+          tooltip: { backgroundColor:'#0a0e1a', borderColor:'#232b47', borderWidth:1, padding:7 } },
+        scales: { x: { stacked: true, grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} },
+          y: { stacked: true, grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} } } }
+    });
+  }
+
+  // 9. Highest abnormal % by PHC
+  const abRanked = [...a.phc].filter(p => p.abPct != null && p.total >= 100).sort((x,y) => y.abPct - x.abPct).slice(0, 15);
+  const abpEl = document.getElementById('abByPhcChart');
+  if (abpEl) {
+    STATE.charts.abByPhc = new Chart(abpEl, {
+      type: 'bar',
+      data: { labels: abRanked.map(p => trunc(shortName(p.name), 22)),
+        datasets: [{ data: abRanked.map(p => p.abPct),
+          backgroundColor: abRanked.map(p => p.abPct > 30 ? C.red : p.abPct > 20 ? C.orange : C.blue),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+
+  // 10. Best (lowest abnormal %) by PHC
+  const bestAbRanked = [...a.phc].filter(p => p.abPct != null && p.total >= 100).sort((x,y) => x.abPct - y.abPct).slice(0, 15);
+  const babEl = document.getElementById('bestAbByPhcChart');
+  if (babEl) {
+    STATE.charts.bestAbByPhc = new Chart(babEl, {
+      type: 'bar',
+      data: { labels: bestAbRanked.map(p => trunc(shortName(p.name), 22)),
+        datasets: [{ data: bestAbRanked.map(p => p.abPct),
+          backgroundColor: ctx => gradH(ctx, 'rgba(126,224,184,0.95)', 'rgba(126,224,184,0.3)'),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+
+  // 11. Highest HIGH % by PHC
+  const phcsWithPct = a.phc.filter(p => p.total >= 100).map(p => ({
+    ...p,
+    hPct: p.total > 0 ? (p.h / p.total * 100) : 0,
+    lPct: p.total > 0 ? (p.l / p.total * 100) : 0,
+  }));
+  const hphcRanked = [...phcsWithPct].sort((x,y) => y.hPct - x.hPct).slice(0, 15);
+  const hphcEl = document.getElementById('highByPhcChart');
+  if (hphcEl) {
+    STATE.charts.highByPhc = new Chart(hphcEl, {
+      type: 'bar',
+      data: { labels: hphcRanked.map(p => trunc(shortName(p.name), 22)),
+        datasets: [{ data: hphcRanked.map(p => p.hPct),
+          backgroundColor: ctx => gradH(ctx, 'rgba(255,123,138,0.95)', 'rgba(255,123,138,0.3)'),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+
+  // 12. Highest LOW % by PHC
+  const lphcRanked = [...phcsWithPct].sort((x,y) => y.lPct - x.lPct).slice(0, 15);
+  const lphcEl = document.getElementById('lowByPhcChart');
+  if (lphcEl) {
+    STATE.charts.lowByPhc = new Chart(lphcEl, {
+      type: 'bar',
+      data: { labels: lphcRanked.map(p => trunc(shortName(p.name), 22)),
+        datasets: [{ data: lphcRanked.map(p => p.lPct),
+          backgroundColor: ctx => gradH(ctx, 'rgba(255,176,102,0.95)', 'rgba(255,176,102,0.3)'),
+          borderRadius: 4, maxBarThickness: 14 }] },
+      options: { ...hBarOpts('%'),
+        scales: { ...hBarOpts().scales,
+          x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} } } }
+    });
+  }
+
+  // 13. High vs Low — grouped for top 12 tests
+  const hlTests = [...a.tests].filter(t => t.total > 0).sort((x,y) => y.total - x.total).slice(0, 12);
+  const hlEl = document.getElementById('highVsLowChart');
+  if (hlEl) {
+    STATE.charts.highVsLow = new Chart(hlEl, {
+      type: 'bar',
+      data: { labels: hlTests.map(t => trunc(t.name, 22)),
+        datasets: [
+          { label:'مرتفع', data: hlTests.map(t => t.h), backgroundColor: C.red, borderRadius: 3, maxBarThickness: 12 },
+          { label:'منخفض', data: hlTests.map(t => t.l), backgroundColor: C.orange, borderRadius: 3, maxBarThickness: 12 },
+        ] },
+      options: { indexAxis: 'y',
+        plugins: { legend: { position:'top', labels: { font: { size: 10 }, color: C.muted, boxWidth: 9, boxHeight: 9, padding: 6 } } },
+        scales: { x: { grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} },
+          y: { grid:{display:false}, ticks:{font:{size:10}, autoSkip:false} } } }
+    });
+  }
+
+  // 14. Volume vs Abnormal (scatter)
+  const scatterTests = [...a.tests].filter(t => t.total >= 50);
+  const vsEl = document.getElementById('volumeVsAbChart');
+  if (vsEl) {
+    STATE.charts.volumeVsAb = new Chart(vsEl, {
+      type: 'scatter',
+      data: { datasets: [{
+        label: 'الفحوصات',
+        data: scatterTests.map(t => ({ x: t.samples, y: t.abPct, label: t.name })),
+        backgroundColor: scatterTests.map(t => t.abPct > 50 ? C.red : t.abPct > 25 ? C.orange : C.blue),
+        borderColor: '#fff', borderWidth: 1,
+        pointRadius: 5, pointHoverRadius: 7,
+      }] },
+      options: {
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: c => `${c.raw.label}: ${fmt(c.raw.x)} عينة، ${fmt1(c.raw.y)}% خارج` } } },
+        scales: {
+          x: { title: { display: true, text: 'عدد العينات', color: C.muted, font: { size: 10 } },
+            grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}} },
+          y: { title: { display: true, text: '% خارج المعدل', color: C.muted, font: { size: 10 } },
+            grid:{color:C.grid}, ticks:{font:{family:'JetBrains Mono', size:9}, callback: v => v+'%'} }
+        } }
+    });
+  }
+
+  // 15. PHC abnormal % distribution
+  const phcAbBuckets = {
+    '< 10%': a.phc.filter(p => p.abPct != null && p.abPct < 10 && p.total >= 50).length,
+    '10-20%': a.phc.filter(p => p.abPct != null && p.abPct >= 10 && p.abPct < 20 && p.total >= 50).length,
+    '20-30%': a.phc.filter(p => p.abPct != null && p.abPct >= 20 && p.abPct < 30 && p.total >= 50).length,
+    '≥ 30%': a.phc.filter(p => p.abPct != null && p.abPct >= 30 && p.total >= 50).length,
+  };
+  const phcDistEl = document.getElementById('phcAbDistChart');
+  if (phcDistEl) {
+    STATE.charts.phcAbDist = new Chart(phcDistEl, {
+      type: 'bar',
+      data: { labels: Object.keys(phcAbBuckets),
+        datasets: [{ data: Object.values(phcAbBuckets),
+          backgroundColor: [C.green, C.blue, C.orange, C.red],
+          borderRadius: 5, maxBarThickness: 50 }] },
+      options: vBarOpts(' مركز')
+    });
+  }
+
+  // 16. Test abnormal % distribution
+  const testAbBuckets = {
+    '< 10%': a.tests.filter(t => t.abPct != null && t.abPct < 10 && t.total >= 50).length,
+    '10-25%': a.tests.filter(t => t.abPct != null && t.abPct >= 10 && t.abPct < 25 && t.total >= 50).length,
+    '25-50%': a.tests.filter(t => t.abPct != null && t.abPct >= 25 && t.abPct < 50 && t.total >= 50).length,
+    '≥ 50%': a.tests.filter(t => t.abPct != null && t.abPct >= 50 && t.total >= 50).length,
+  };
+  const testDistEl = document.getElementById('testAbDistChart');
+  if (testDistEl) {
+    STATE.charts.testAbDist = new Chart(testDistEl, {
+      type: 'bar',
+      data: { labels: Object.keys(testAbBuckets),
+        datasets: [{ data: Object.values(testAbBuckets),
+          backgroundColor: [C.green, C.blue, C.orange, C.red],
+          borderRadius: 5, maxBarThickness: 50 }] },
+      options: vBarOpts(' فحص')
+    });
+  }
+
+  // Render PHC results table
+  const phcResEl = document.querySelector('#phcResultsTable tbody');
+  if (phcResEl) {
+    const sorted = [...a.phc].filter(p => p.total > 0).sort((x,y) => y.total - x.total);
+    phcResEl.innerHTML = sorted.map((p, i) => {
+      const abCls = p.abPct == null ? 't-na' : p.abPct > 30 ? 't-bad' : p.abPct > 15 ? 't-warn' : 't-good';
+      return `
+        <tr data-name="${p.name.toLowerCase()}">
+          <td class="num">${i+1}</td>
+          <td>${shortName(p.name)}</td>
+          <td class="num">${fmt(p.total)}</td>
+          <td class="num t-n">${fmt(p.n)}</td>
+          <td class="num t-h">${fmt(p.h)}</td>
+          <td class="num t-l">${fmt(p.l)}</td>
+          <td class="num ${abCls}">${p.abPct == null ? '—' : fmt1(p.abPct)+'%'}</td>
+        </tr>`;
+    }).join('');
+  }
+}
+
+function bindModalSearches() {
+  const bind = (id, selector) => {
+    const inp = document.getElementById(id);
+    if (!inp) return;
+    inp.oninput = e => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll(selector).forEach(el => {
+        el.style.display = el.dataset.name && el.dataset.name.includes(q) ? '' : 'none';
+      });
+    };
+  };
+  bind('testBdSearch', '#testBreakdown .test-row');
+  bind('testFullSearch', '#testsFullTable tbody tr');
+  bind('phcResultsSearch', '#phcResultsTable tbody tr');
+}
+
+document.getElementById('openResultsAnalysis').addEventListener('click', () => {
+  document.getElementById('testsModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  if (STATE.an) renderResultsModalContent(STATE.an);
+});
+document.getElementById('closeTestsModal').addEventListener('click', () => {
+  document.getElementById('testsModal').classList.remove('show');
+  document.body.style.overflow = '';
+});
+document.getElementById('testsModal').addEventListener('click', e => {
+  if (e.target.id === 'testsModal') {
+    document.getElementById('testsModal').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+});
+
+// Modal-specific PDF export
+document.getElementById('modalPdfBtn').addEventListener('click', async () => {
+  await exportModalPdf();
+});
+
+async function exportModalPdf() {
+  const btn = document.getElementById('modalPdfBtn');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> جاري…';
+  document.body.classList.add('pdf-mode');
+  await new Promise(r => setTimeout(r, 300));
+  Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
+  await new Promise(r => setTimeout(r, 700));
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const s = STATE.an.s;
+    const body = document.getElementById('testsModalBody');
+
+    // Expand tables
+    const origs = [];
+    body.querySelectorAll('.table-scroll').forEach(t => {
+      origs.push({ el: t, attr: t.getAttribute('style') || '' });
+      t.style.setProperty('max-height', 'none', 'important');
+      t.style.setProperty('overflow-y', 'visible', 'important');
+      t.style.setProperty('height', 'auto', 'important');
+    });
+
+    let pdf;
+    try {
+      const blocks = Array.from(body.children).filter(b => b && b.offsetHeight > 0);
+      const refWidthPx = body.scrollWidth;
+      const scale = 1.8;
+      const imgs = [];
+      for (const block of blocks) {
+        await new Promise(r => requestAnimationFrame(r));
+        const c = await html2canvas(block, {
+          backgroundColor: '#0a0e1a', scale: scale, useCORS: true,
+          windowWidth: refWidthPx, logging: false,
+          height: block.scrollHeight, windowHeight: block.scrollHeight,
+        });
+        imgs.push({ dataUrl: c.toDataURL('image/jpeg', 0.82), w: c.width, h: c.height });
+      }
+
+      const pageW_mm = 210;
+      const pxPerMm = imgs[0] ? (imgs[0].w / pageW_mm) : 6.8;
+      const HEADER_HEIGHT_MM = 42;
+      const MAX_PAGE_HEIGHT_MM = 4800;
+      const blockHeightsMm = imgs.map(im => im.h / pxPerMm);
+      const totalContentMm = blockHeightsMm.reduce((a,b) => a+b, 0);
+
+      // Split into pages if needed
+      const pageBreaks = [];
+      let runningMm = HEADER_HEIGHT_MM;
+      let currentPageMax = MAX_PAGE_HEIGHT_MM - 12;
+      for (let i = 0; i < blockHeightsMm.length; i++) {
+        const h = blockHeightsMm[i];
+        if (runningMm + h > currentPageMax && i > 0) {
+          pageBreaks.push(i);
+          runningMm = 0;
+        }
+        runningMm += h;
+      }
+      const pages = [];
+      let start = 0;
+      for (const brk of pageBreaks) { pages.push({ start, end: brk }); start = brk; }
+      pages.push({ start, end: blockHeightsMm.length });
+
+      const firstPageContent = blockHeightsMm.slice(pages[0].start, pages[0].end).reduce((a,b) => a+b, 0);
+      const firstPageH = Math.min(MAX_PAGE_HEIGHT_MM, HEADER_HEIGHT_MM + firstPageContent + 12);
+
+      pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: [pageW_mm, firstPageH], compress: true });
+
+      for (let pi = 0; pi < pages.length; pi++) {
+        const page = pages[pi];
+        const contentMm = blockHeightsMm.slice(page.start, page.end).reduce((a,b) => a+b, 0);
+        const hasHeader = pi === 0;
+        const thisPageH = Math.min(MAX_PAGE_HEIGHT_MM, (hasHeader ? HEADER_HEIGHT_MM : 0) + contentMm + 12);
+        if (pi > 0) pdf.addPage([pageW_mm, thisPageH], 'p');
+        pdf.setFillColor(10, 14, 26);
+        pdf.rect(0, 0, pageW_mm, thisPageH, 'F');
+        let yMm = 0;
+        if (hasHeader) {
+          pdf.setFillColor(28, 35, 64);
+          pdf.rect(0, 0, pageW_mm, HEADER_HEIGHT_MM, 'F');
+          pdf.setFillColor(255, 123, 138);
+          pdf.rect(0, 0, pageW_mm, 1.2, 'F');
+          pdf.setDrawColor(45, 55, 89);
+          pdf.setLineWidth(0.3);
+          pdf.line(0, HEADER_HEIGHT_MM, pageW_mm, HEADER_HEIGHT_MM);
+          pdf.setTextColor(231, 236, 247);
+          pdf.setFontSize(18);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('Lab Test Results — Detailed Report', pageW_mm / 2, 20, { align: 'center' });
+          pdf.setFontSize(10);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(182, 167, 240);
+          pdf.text('Unified Lab Center  —  Test Outcomes Analysis', pageW_mm / 2, 28, { align: 'center' });
+          pdf.setFontSize(9);
+          pdf.setTextColor(136, 147, 179);
+          pdf.text(`${s.periodStart}   to   ${s.periodEnd}      ${s.samples.toLocaleString()} samples      ${s.tests} tests`, pageW_mm / 2, 36, { align: 'center' });
+          yMm = HEADER_HEIGHT_MM;
+        }
+        for (let i = page.start; i < page.end; i++) {
+          pdf.addImage(imgs[i].dataUrl, 'JPEG', 0, yMm, pageW_mm, blockHeightsMm[i]);
+          yMm += blockHeightsMm[i];
+        }
+      }
+    } finally {
+      origs.forEach(o => { o.el.setAttribute('style', o.attr); });
+    }
+    pdf.save(`Tests_Results_${s.periodStart}.pdf`);
+  } catch(err) {
+    console.error(err);
+    alert('فشل التصدير: ' + err.message);
+  } finally {
+    document.body.classList.remove('pdf-mode');
+    await new Promise(r => setTimeout(r, 200));
+    Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
 document.getElementById('reloadBtn').addEventListener('click', () => {
   document.getElementById('upload-section').classList.remove('hide');
   document.getElementById('app').classList.remove('show');
   document.getElementById('reloadBtn').style.display = 'none';
+  document.getElementById('openResultsAnalysis').style.display = 'none';
   document.getElementById('exportWrap').style.display = 'none';
   statusEl.classList.remove('show');
   progressEl.style.display = 'none';
