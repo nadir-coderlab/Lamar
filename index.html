@@ -1598,12 +1598,11 @@ function renderTestsTable(a) {
   // Main page: just test names and counts (no results)
   const el = document.querySelector('#testsTable tbody');
   document.getElementById('testCount').textContent = `${a.tests.length} فحص`;
-  const maxSamples = a.tests[0]?.samples || 1;
   if (el) el.innerHTML = a.tests.map((t, i) => `
     <tr data-name="${t.name.toLowerCase()}">
       <td class="num">${i+1}</td>
       <td>${t.name}</td>
-      <td class="num bar-c"><div class="bg" style="width:${(t.samples/maxSamples)*100}%"></div><span>${fmt(t.samples)}</span></td>
+      <td class="num"><strong>${fmt(t.samples)}</strong></td>
     </tr>`).join('');
 
   // Modal: full table with results
@@ -2295,6 +2294,10 @@ async function exportModalPdf() {
   const orig = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> جاري…';
+
+  // Add a class to modal body so we can hide searches/inputs
+  const modalBody = document.getElementById('testsModalBody');
+  modalBody.classList.add('pdf-mode');
   document.body.classList.add('pdf-mode');
   await new Promise(r => setTimeout(r, 300));
   Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
@@ -2303,11 +2306,10 @@ async function exportModalPdf() {
   try {
     const { jsPDF } = window.jspdf;
     const s = STATE.an.s;
-    const body = document.getElementById('testsModalBody');
 
     // Expand tables
     const origs = [];
-    body.querySelectorAll('.table-scroll').forEach(t => {
+    modalBody.querySelectorAll('.table-scroll').forEach(t => {
       origs.push({ el: t, attr: t.getAttribute('style') || '' });
       t.style.setProperty('max-height', 'none', 'important');
       t.style.setProperty('overflow-y', 'visible', 'important');
@@ -2316,31 +2318,45 @@ async function exportModalPdf() {
 
     let pdf;
     try {
-      const blocks = Array.from(body.children).filter(b => b && b.offsetHeight > 0);
-      const refWidthPx = body.scrollWidth;
-      const scale = 1.8;
+      const blocks = Array.from(modalBody.children).filter(b => b && b.offsetHeight > 0);
+      const refWidthPx = Math.min(modalBody.scrollWidth, 440); // cap width to avoid huge canvas
+      const scale = 1.4; // lowered from 1.8 to stay within iOS canvas limits
       const imgs = [];
+
       for (const block of blocks) {
         await new Promise(r => requestAnimationFrame(r));
-        const c = await html2canvas(block, {
-          backgroundColor: '#0a0e1a', scale: scale, useCORS: true,
-          windowWidth: refWidthPx, logging: false,
-          height: block.scrollHeight, windowHeight: block.scrollHeight,
-        });
-        imgs.push({ dataUrl: c.toDataURL('image/jpeg', 0.82), w: c.width, h: c.height });
+        try {
+          const c = await html2canvas(block, {
+            backgroundColor: '#0a0e1a',
+            scale: scale,
+            useCORS: true,
+            windowWidth: refWidthPx,
+            logging: false,
+            height: block.scrollHeight,
+            windowHeight: block.scrollHeight,
+          });
+          // Convert immediately and free canvas memory
+          const dataUrl = c.toDataURL('image/jpeg', 0.78);
+          imgs.push({ dataUrl, w: c.width, h: c.height });
+          // Free canvas immediately
+          c.width = 0; c.height = 0;
+        } catch (err) {
+          console.warn('skip block in modal export:', err);
+        }
       }
 
+      if (imgs.length === 0) throw new Error('لا يوجد محتوى للتصدير');
+
       const pageW_mm = 210;
-      const pxPerMm = imgs[0] ? (imgs[0].w / pageW_mm) : 6.8;
+      const pxPerMm = imgs[0].w / pageW_mm;
       const HEADER_HEIGHT_MM = 42;
       const MAX_PAGE_HEIGHT_MM = 4800;
       const blockHeightsMm = imgs.map(im => im.h / pxPerMm);
-      const totalContentMm = blockHeightsMm.reduce((a,b) => a+b, 0);
 
       // Split into pages if needed
       const pageBreaks = [];
       let runningMm = HEADER_HEIGHT_MM;
-      let currentPageMax = MAX_PAGE_HEIGHT_MM - 12;
+      const currentPageMax = MAX_PAGE_HEIGHT_MM - 12;
       for (let i = 0; i < blockHeightsMm.length; i++) {
         const h = blockHeightsMm[i];
         if (runningMm + h > currentPageMax && i > 0) {
@@ -2397,11 +2413,26 @@ async function exportModalPdf() {
     } finally {
       origs.forEach(o => { o.el.setAttribute('style', o.attr); });
     }
-    pdf.save(`Tests_Results_${s.periodStart}.pdf`);
+
+    // FORCE DOWNLOAD using Blob + anchor with download attribute
+    const fname = `Tests_Results_${s.periodStart}.pdf`;
+    const pdfBlob = pdf.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fname;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 500);
   } catch(err) {
     console.error(err);
     alert('فشل التصدير: ' + err.message);
   } finally {
+    modalBody.classList.remove('pdf-mode');
     document.body.classList.remove('pdf-mode');
     await new Promise(r => setTimeout(r, 200));
     Object.values(STATE.charts).forEach(c => { try { c?.resize?.(); } catch(e) {} });
@@ -2609,7 +2640,19 @@ async function exportPdf(mode = 'mobile') {
     }
 
     const fname = `Lab_Report_${isDesktop ? 'Desktop' : 'Mobile'}_${s.periodStart}.pdf`;
-    pdf.save(fname);
+    // Force download using Blob + anchor with download attribute
+    const pdfBlob = pdf.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fname;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 500);
   } catch(err) {
     console.error(err);
     alert('فشل تصدير PDF: ' + err.message);
