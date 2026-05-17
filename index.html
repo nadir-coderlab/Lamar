@@ -685,19 +685,33 @@ const STATE = { data: null, an: null, charts: {} };
 // ============= Chart download button =============
 // Adds a small "save PNG" button on top of each chart canvas.
 // Exports the chart as a clean PNG image (just the chart, no surrounding text).
-function downloadChartImage(canvas, filename) {
+async function downloadCardImage(card, filename, btn) {
+  // Hide the download button temporarily so it doesn't show in the image
+  const allBtns = card.querySelectorAll('.chart-dl-btn');
+  allBtns.forEach(b => b.style.visibility = 'hidden');
+  // Show loading state
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
+
   try {
-    // Get the chart instance to access its rendered state
-    const chartInstance = Chart.getChart(canvas);
-    let dataUrl;
-    if (chartInstance) {
-      // Use Chart.js's toBase64Image for higher quality + dark background
-      dataUrl = chartInstance.toBase64Image('image/png', 1.0);
-    } else {
-      dataUrl = canvas.toDataURL('image/png');
-    }
-    // Convert to blob for reliable download (works on iOS)
-    fetch(dataUrl).then(r => r.blob()).then(blob => {
+    // Wait for fonts and a frame for the button to actually hide
+    try { await document.fonts.ready; } catch(e) {}
+    await new Promise(r => requestAnimationFrame(r));
+
+    const canvas = await html2canvas(card, {
+      backgroundColor: '#0a0e1a',
+      scale: 2,                  // high resolution for slides
+      useCORS: true,
+      logging: false,
+      letterRendering: true,
+      imageTimeout: 15000,
+      windowWidth: card.scrollWidth,
+      height: card.scrollHeight,
+      windowHeight: card.scrollHeight,
+    });
+
+    canvas.toBlob(blob => {
+      if (!blob) { alert('فشل إنشاء الصورة'); return; }
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       if (isIOS && navigator.canShare) {
         const file = new File([blob], filename, { type: 'image/png' });
@@ -719,13 +733,14 @@ function downloadChartImage(canvas, filename) {
         if (a.parentNode) document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }, 800);
-    }).catch(err => {
-      console.error('chart download failed:', err);
-      alert('فشل تحميل الصورة: ' + err.message);
-    });
+    }, 'image/png');
   } catch (err) {
-    console.error('chart download error:', err);
+    console.error('card download failed:', err);
     alert('فشل تحميل الصورة: ' + err.message);
+  } finally {
+    // Restore buttons
+    allBtns.forEach(b => b.style.visibility = '');
+    if (btn) { btn.innerHTML = origText; btn.disabled = false; }
   }
 }
 
@@ -737,22 +752,22 @@ function attachChartDownloadButtons(root) {
     if (box.querySelector('.chart-dl-btn')) return;
     const canvas = box.querySelector('canvas');
     if (!canvas) return;
+    const card = box.closest('.card');
+    if (!card) return;
     const btn = document.createElement('button');
     btn.className = 'chart-dl-btn';
     btn.type = 'button';
-    btn.title = 'تحميل كصورة PNG';
+    btn.title = 'تحميل البطاقة كصورة PNG';
     btn.innerHTML = '💾';
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      // Derive filename from nearby card heading or canvas id
+      // Derive filename from card heading
       let title = '';
-      const card = box.closest('.card');
-      const h = card && card.querySelector('h3');
+      const h = card.querySelector('h3');
       if (h) title = h.textContent.trim();
       if (!title) title = canvas.id || 'chart';
-      // Sanitize filename
       const clean = title.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_').substring(0, 60);
-      downloadChartImage(canvas, `${clean}.png`);
+      downloadCardImage(card, `${clean}.png`, btn);
     });
     box.appendChild(btn);
   });
