@@ -182,6 +182,22 @@
   .chart-box { position: relative; width: 100%; height: 240px; }
   .chart-box.tall { height: 320px; }
   .chart-box.xtall { height: 480px; }
+  /* Chart download button */
+  .chart-dl-btn {
+    position: absolute; top: 6px; left: 6px; z-index: 10;
+    width: 30px; height: 30px; padding: 0;
+    background: rgba(139,124,229,0.18);
+    border: 1px solid rgba(139,124,229,0.4);
+    border-radius: 8px;
+    color: var(--purple-light);
+    font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    opacity: 0.65;
+  }
+  .chart-dl-btn:hover { opacity: 1; background: rgba(139,124,229,0.32); transform: translateY(-1px); }
+  .chart-dl-btn:active { transform: scale(0.94); }
+  body.pdf-mode .chart-dl-btn { display: none !important; }
   .mini-row { display: grid; gap: 6px; margin-top: 10px; }
   .mini-row.c2 { grid-template-columns: 1fr 1fr; }
   .mini-row.c3 { grid-template-columns: repeat(3, 1fr); }
@@ -665,6 +681,83 @@
 <script>
 'use strict';
 const STATE = { data: null, an: null, charts: {} };
+
+// ============= Chart download button =============
+// Adds a small "save PNG" button on top of each chart canvas.
+// Exports the chart as a clean PNG image (just the chart, no surrounding text).
+function downloadChartImage(canvas, filename) {
+  try {
+    // Get the chart instance to access its rendered state
+    const chartInstance = Chart.getChart(canvas);
+    let dataUrl;
+    if (chartInstance) {
+      // Use Chart.js's toBase64Image for higher quality + dark background
+      dataUrl = chartInstance.toBase64Image('image/png', 1.0);
+    } else {
+      dataUrl = canvas.toDataURL('image/png');
+    }
+    // Convert to blob for reliable download (works on iOS)
+    fetch(dataUrl).then(r => r.blob()).then(blob => {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS && navigator.canShare) {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: filename }).catch(err => {
+            if (err.name !== 'AbortError') console.warn(err);
+          });
+          return;
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (a.parentNode) document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 800);
+    }).catch(err => {
+      console.error('chart download failed:', err);
+      alert('فشل تحميل الصورة: ' + err.message);
+    });
+  } catch (err) {
+    console.error('chart download error:', err);
+    alert('فشل تحميل الصورة: ' + err.message);
+  }
+}
+
+function attachChartDownloadButtons(root) {
+  const scope = root || document;
+  const boxes = scope.querySelectorAll('.chart-box');
+  boxes.forEach(box => {
+    // Skip if button already exists
+    if (box.querySelector('.chart-dl-btn')) return;
+    const canvas = box.querySelector('canvas');
+    if (!canvas) return;
+    const btn = document.createElement('button');
+    btn.className = 'chart-dl-btn';
+    btn.type = 'button';
+    btn.title = 'تحميل كصورة PNG';
+    btn.innerHTML = '💾';
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      // Derive filename from nearby card heading or canvas id
+      let title = '';
+      const card = box.closest('.card');
+      const h = card && card.querySelector('h3');
+      if (h) title = h.textContent.trim();
+      if (!title) title = canvas.id || 'chart';
+      // Sanitize filename
+      const clean = title.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_').substring(0, 60);
+      downloadChartImage(canvas, `${clean}.png`);
+    });
+    box.appendChild(btn);
+  });
+}
+
 const C = { purple:'#8b7ce5', purpleLight:'#b6a7f0', green:'#7ee0b8', greenDark:'#5fc99c', orange:'#ffb066', red:'#ff7b8a', blue:'#6ec4f7', pink:'#f5a3c7', yellow:'#ffd76e', muted:'#8893b3', dim:'#5d6788', grid: 'rgba(255,255,255,0.05)' };
 Chart.defaults.font.family = "'IBM Plex Sans Arabic', sans-serif";
 Chart.defaults.font.size = 10.5;
@@ -1321,7 +1414,11 @@ function renderAll(a) {
   renderTestsTable(a);
   renderInsights(a);
   renderPhcTable(a, 'all');
-  requestAnimationFrame(() => renderAllCharts(a));
+  requestAnimationFrame(() => {
+    renderAllCharts(a);
+    // Attach download buttons after charts are rendered
+    setTimeout(() => attachChartDownloadButtons(), 100);
+  });
   attachSearches();
   attachTabs();
 }
@@ -1973,7 +2070,11 @@ function renderResultsModalContent(a) {
   renderResultsKpis(a);
   renderCriticalTestAlerts(a);
   renderTestBreakdown(a);
-  requestAnimationFrame(() => renderResultsCharts(a));
+  requestAnimationFrame(() => {
+    renderResultsCharts(a);
+    // Attach download buttons to modal charts
+    setTimeout(() => attachChartDownloadButtons(document.getElementById('testsModalBody')), 100);
+  });
   bindModalSearches();
 }
 
