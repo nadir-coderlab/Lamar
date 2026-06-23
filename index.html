@@ -157,6 +157,93 @@
   .review-title{margin:24px 0 2px; font-size:14.5px; font-weight:800; color:var(--muted);}
 
   @media(max-width:420px){ .q-text{font-size:15px;} .opt{font-size:14.5px;} .pick h1{font-size:23px;} }
+
+  /* ===== اختيار طريقة المذاكرة (الإنجليزي) ===== */
+  #modePick{display:none; padding:34px 16px 0; text-align:center;}
+  #modePick.active{display:block; animation:fade .3s ease;}
+  .mode-cards{display:flex; flex-direction:column; gap:14px; max-width:470px; margin:20px auto 0;}
+  .mode-card{border:2px solid var(--line); border-radius:22px; padding:22px; cursor:pointer; transition:transform .15s; text-align:center; box-shadow:0 6px 20px rgba(31,41,55,.06);}
+  .mode-card:active{transform:scale(.97);}
+  .mode-card .mc-emoji{font-size:46px; line-height:1;}
+  .mode-card h3{margin:9px 0 4px; font-size:21px; font-weight:900;}
+  .mode-card p{margin:0; font-size:13.5px; color:var(--muted); font-weight:600;}
+  .mode-card.learn{border-color:#a5b4fc; background:linear-gradient(160deg,#eef2ff,#fff);}
+  .mode-card.learn h3{color:#4f46e5;}
+  .mode-card.play{border-color:#fca5a5; background:linear-gradient(160deg,#fff1f2,#fff);}
+  .mode-card.play h3{color:#e11d48;}
+
+  /* ===== بطاقات التعلّم ===== */
+  #learnScreen,#playScreen{display:none;}
+  #learnScreen.active,#playScreen.active{display:block;}
+  .topbar{position:sticky; top:0; z-index:40; background:rgba(255,255,255,.93); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding:12px 16px;}
+  .topbar-row{max-width:600px; margin:0 auto; display:flex; align-items:center; gap:11px;}
+  .topbar h1{margin:0; font-size:16px; font-weight:900; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .pill{flex:0 0 auto; font-weight:800; font-size:12.5px; color:#4f46e5; background:#eef2ff; padding:6px 13px; border-radius:999px;}
+  .learn-wrap{max-width:560px; margin:0 auto; padding:18px 16px 0;}
+  .flashcard{background:#fff; border-radius:26px; box-shadow:0 14px 40px rgba(79,70,229,.16); border:1px solid var(--line); padding:28px 22px; text-align:center; min-height:340px; display:flex; flex-direction:column; justify-content:center;}
+  .flashcard.in{animation:cardIn .42s cubic-bezier(.22,1,.36,1);}
+  @keyframes cardIn{from{opacity:0; transform:translateX(46px) scale(.95);} to{opacity:1; transform:none;}}
+  .fc-emoji{font-size:64px; line-height:1; margin-bottom:8px;}
+  .fc-q{font-size:23px; font-weight:800; color:var(--ink); line-height:1.5;}
+  .fc-q.en{direction:ltr;}
+  .fc-tr{font-size:15px; color:var(--muted); font-weight:600; margin-top:9px;}
+  .fc-divider{display:flex; align-items:center; justify-content:center; margin:18px 0 16px; color:#a5b4fc; font-size:22px;}
+  .fc-label{font-size:11.5px; font-weight:800; color:#16a34a; letter-spacing:1px; margin-bottom:7px;}
+  .fc-ans{font-size:23px; font-weight:900; color:#15803d; direction:ltr; background:#dcfce7; border-radius:14px; padding:11px 16px; display:inline-block; animation:ansPop .5s .12s both;}
+  @keyframes ansPop{from{opacity:0; transform:scale(.8);} to{opacity:1; transform:scale(1);}}
+  .fc-at{font-size:14.5px; color:#334155; font-weight:600; margin-top:13px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:10px 13px; line-height:1.7;}
+  .speak-btn{margin-top:15px; display:inline-flex; align-items:center; gap:8px; background:#4f46e5; color:#fff; border:none; border-radius:999px; padding:11px 22px; font-family:inherit; font-size:15.5px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(79,70,229,.3);}
+  .speak-btn:active{transform:scale(.94);}
+  .learn-nav{display:flex; gap:10px; margin:16px auto 0; max-width:560px;}
+  .learn-nav button{flex:1; border:none; border-radius:15px; padding:15px; font-family:inherit; font-size:16px; font-weight:800; cursor:pointer; transition:transform .12s;}
+  .ln-prev{background:#fff; color:#4f46e5; border:2px solid #c7d2fe;}
+  .ln-next{background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff;}
+  .ln-next:active,.ln-prev:active{transform:translateY(1px);}
+  .ln-prev:disabled{opacity:.4;}
+  .learn-done{text-align:center; padding:10px 16px 0; max-width:560px; margin:0 auto;}
+
+  /* ===== وضع الاختبار التفاعلي ===== */
+  .play-wrap{max-width:600px; margin:0 auto; padding:18px 16px 0;}
+  .pbar{height:9px; background:#fde2e4; border-radius:999px; overflow:hidden; margin-bottom:16px;}
+  .pbar>i{display:block; height:100%; width:0; background:linear-gradient(90deg,#e11d48,#f97316); border-radius:999px; transition:width .35s;}
+  .pcard{background:#fff; border-radius:24px; box-shadow:0 12px 34px rgba(225,29,72,.12); border:1px solid var(--line); padding:22px 18px;}
+  .pcard .pemoji{font-size:58px; text-align:center; line-height:1; margin-bottom:8px;}
+  .pcard .pq{font-size:21px; font-weight:800; text-align:center; line-height:1.5; margin-bottom:4px;}
+  .pcard .pq.en{direction:ltr;}
+  .pcard .ptr{font-size:14px; color:var(--muted); font-weight:600; text-align:center; margin-bottom:16px;}
+  .popts{display:flex; flex-direction:column; gap:10px;}
+  .popt{display:flex; align-items:center; gap:12px; border:2px solid var(--line); border-radius:15px; padding:14px; cursor:pointer; font-size:16px; font-weight:700; background:#fff; transition:all .14s;}
+  .popt.en{direction:ltr; text-align:left;}
+  .popt:active{transform:scale(.99);}
+  .popt .pdot{flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:2px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:13px; color:#fff; font-weight:900;}
+  .popt.right{border-color:#86efac; background:#dcfce7;} .popt.right .pdot{background:#16a34a; border-color:#16a34a;}
+  .popt.wrongpick{border-color:#fca5a5; background:#fee2e2;} .popt.wrongpick .pdot{background:#dc2626; border-color:#dc2626;}
+  .plocked .popt{cursor:default;}
+  .feedback{margin-top:16px; border-radius:16px; padding:15px; display:none; animation:fbIn .3s ease;}
+  .feedback.show{display:block;}
+  @keyframes fbIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  .feedback.ok{background:#dcfce7; border:1px solid #86efac;}
+  .feedback.no{background:#fef3c7; border:1px solid #fcd34d;}
+  .fb-head{font-size:17px; font-weight:900; display:flex; align-items:center; gap:7px; margin-bottom:6px;}
+  .feedback.ok .fb-head{color:#15803d;} .feedback.no .fb-head{color:#b45309;}
+  .fb-ans{font-size:18px; font-weight:900; color:#15803d; direction:ltr; margin:4px 0;}
+  .fb-at{font-size:14.5px; color:#334155; font-weight:600; line-height:1.7;}
+  .fb-speak{margin-top:10px; display:inline-flex; align-items:center; gap:7px; background:#16a34a; color:#fff; border:none; border-radius:999px; padding:9px 18px; font-family:inherit; font-size:14.5px; font-weight:800; cursor:pointer;}
+  .fb-speak:active{transform:scale(.95);}
+  .pnext{width:100%; margin-top:14px; border:none; border-radius:15px; padding:15px; font-family:inherit; font-size:16.5px; font-weight:800; color:#fff; background:linear-gradient(135deg,#e11d48,#f97316); cursor:pointer; display:none;}
+  .pnext.show{display:block;} .pnext:active{transform:translateY(1px);}
+  .play-score{text-align:center; font-size:13.5px; font-weight:700; color:var(--muted); margin-top:12px;}
+
+  /* ===== مؤثرات الاحتفال ===== */
+  #confetti{position:fixed; inset:0; pointer-events:none; z-index:9999; overflow:hidden; display:none;}
+  #confetti.go{display:block;}
+  .cft{position:absolute; width:11px; height:14px; top:-16px; border-radius:2px; animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(108vh) rotate(720deg);}}
+  .cheer{position:fixed; left:50%; top:36%; transform:translate(-50%,-50%); font-size:72px; z-index:9998; pointer-events:none; animation:cheerPop 1s ease forwards;}
+  @keyframes cheerPop{0%{opacity:0; transform:translate(-50%,-50%) scale(.3);}30%{opacity:1; transform:translate(-50%,-50%) scale(1.2);}100%{opacity:0; transform:translate(-50%,-65%) scale(1);}}
+  @keyframes shakeX{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-5px);}40%,60%{transform:translateX(5px);}}
+  .pcard.shake{animation:shakeX .45s;}
+
 </style>
 </head>
 <body>
@@ -194,6 +281,60 @@
   <p class="sub">اختاري المادة اللي تبين تختبرين نفسك فيها.</p>
   <div class="cards" id="subjectCards"></div>
   <p class="foot" id="gFoot"></p>
+</div>
+
+
+<!-- ===== اختيار طريقة المذاكرة (للإنجليزي) ===== -->
+<div id="modePick">
+  <div class="backlink" onclick="showScreen('pickSubject')" style="display:inline-flex;align-items:center;gap:6px;margin:18px auto;cursor:pointer;color:var(--muted);font-weight:700;font-size:14px;background:#fff;border:1px solid var(--line);padding:8px 16px;border-radius:999px;">→ رجوع</div>
+  <div class="hero-emoji" style="font-size:50px">🔤</div>
+  <h1 id="mpTitle" style="font-size:23px;font-weight:900;margin:6px 0;">مراجعة الإنجليزي</h1>
+  <p class="sub" style="color:var(--muted);font-size:15px;font-weight:600;max-width:430px;margin:0 auto;">كيف تبين تذاكرين اليوم؟</p>
+  <div class="mode-cards">
+    <div class="mode-card learn" onclick="startLearn()">
+      <div class="mc-emoji">🎴</div>
+      <h3>بطاقات التعلّم</h3>
+      <p>شوفي السؤال والإجابة الصحيحة مع الترجمة، واسمعي النُّطق الصحيح 🔊</p>
+    </div>
+    <div class="mode-card play" onclick="startPlay()">
+      <div class="mc-emoji">🎮</div>
+      <h3>تحدّي الاختبار</h3>
+      <p>اختبري نفسك! نجوم واحتفال لما تجاوبين صح، ونعيد عليكِ اللي تغلطين فيه</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== بطاقات التعلّم ===== -->
+<div id="learnScreen">
+  <div class="topbar"><div class="topbar-row">
+    <button class="back" onclick="showScreen('modePick')" title="رجوع">→</button>
+    <h1>🎴 بطاقات التعلّم</h1>
+    <span class="pill" id="lnPos">1 / 1</span>
+  </div></div>
+  <div class="learn-wrap">
+    <div class="flashcard in" id="flashcard"></div>
+  </div>
+  <div class="learn-nav">
+    <button class="ln-prev" id="lnPrev" onclick="learnPrev()">⬅️ السابق</button>
+    <button class="ln-next" id="lnNext" onclick="learnNext()">التالي ➡️</button>
+  </div>
+  <div class="learn-done" id="lnDone" style="display:none">
+    <button class="btn btn-primary" style="margin-top:8px" onclick="startPlay()">جرّبي الاختبار الآن 🎮</button>
+  </div>
+</div>
+
+<!-- ===== وضع الاختبار التفاعلي ===== -->
+<div id="playScreen">
+  <div class="topbar"><div class="topbar-row">
+    <button class="back" onclick="confirmLeavePlay()" title="رجوع">→</button>
+    <h1>🎮 تحدّي الإنجليزي</h1>
+    <span class="pill" id="plPos" style="color:#e11d48;background:#fff1f2">1 / 1</span>
+  </div></div>
+  <div class="play-wrap">
+    <div class="pbar"><i id="plBar"></i></div>
+    <div id="playArea"></div>
+    <div class="play-score" id="plScore"></div>
+  </div>
 </div>
 
 <!-- ===== شاشة 3: الاختبار ===== -->
@@ -364,70 +505,70 @@ const LAMAR_MATH = [
 /* ---------- ميار · الإنجليزي ---------- */
 const MAYAR_EN = [
  {section:"General Questions"},
- {t:"mc",q:"What is your favorite outdoor place?",ltr:1,o:["They explored some cave.","I could ride a bike.","My favorite outdoor place is a field."],a:2},
- {t:"mc",q:"Could he run fast?",ltr:1,o:["Yes, she does.","Yes, I am.","Yes, he could."],a:2},
- {t:"mc",q:"What is the matter?",ltr:1,o:["I am helpful.","She plays chess.","He has a stomachache."],a:2},
- {t:"mc",q:"Do you need a doctor?",ltr:1,o:["Yes, they did.","Yes, I can.","Yes, I do."],a:2},
- {t:"mc",q:"What is your favorite season?",ltr:1,o:["He gets up early.","I like the summer.","She reads the story."],a:1},
- {t:"mc",q:"What weather do you like?",ltr:1,o:["I like sunny days.","I go to the bookstore.","He goes swimming."],a:0},
- {t:"mc",q:"What's your favorite animal?",ltr:1,o:["My favorite animal is panda.","I like reading.","My favorite color is blue."],a:0},
- {t:"mc",q:"How is the tortoise moving?",ltr:1,o:["The tortoise is moving slowly.","Polar bear is asleep.","Crocodile is dangerous."],a:0},
+ {t:"mc",q:"What is your favorite outdoor place?",tr:"ما مكانك المفضّل في الخارج؟",ltr:1,o:["They explored some cave.","I could ride a bike.","My favorite outdoor place is a field."],a:2,at:"مكاني المفضّل في الخارج هو الحقل.",say:"My favorite outdoor place is a field."},
+ {t:"mc",q:"Could he run fast?",tr:"هل كان يستطيع الجري بسرعة؟",ltr:1,o:["Yes, she does.","Yes, I am.","Yes, he could."],a:2,at:"نعم، كان يستطيع.",say:"Yes, he could."},
+ {t:"mc",q:"What is the matter?",tr:"ما المشكلة؟ / ماذا بك؟",ltr:1,o:["I am helpful.","She plays chess.","He has a stomachache."],a:2,at:"يشعر بألمٍ في المعدة.",say:"He has a stomachache."},
+ {t:"mc",q:"Do you need a doctor?",tr:"هل تحتاج طبيبًا؟",ltr:1,o:["Yes, they did.","Yes, I can.","Yes, I do."],a:2,at:"نعم، أحتاج.",say:"Yes, I do."},
+ {t:"mc",q:"What is your favorite season?",tr:"ما فصلك المفضّل؟",ltr:1,o:["He gets up early.","I like the summer.","She reads the story."],a:1,at:"أحبّ الصيف.",say:"I like the summer."},
+ {t:"mc",q:"What weather do you like?",tr:"ما الطقس الذي تحبّه؟",ltr:1,o:["I like sunny days.","I go to the bookstore.","He goes swimming."],a:0,at:"أحبّ الأيام المشمسة.",say:"I like sunny days."},
+ {t:"mc",q:"What's your favorite animal?",tr:"ما حيوانك المفضّل؟",ltr:1,o:["My favorite animal is panda.","I like reading.","My favorite color is blue."],a:0,at:"حيواني المفضّل الباندا.",say:"My favorite animal is panda."},
+ {t:"mc",q:"How is the tortoise moving?",tr:"كيف تتحرّك السلحفاة؟",ltr:1,o:["The tortoise is moving slowly.","Polar bear is asleep.","Crocodile is dangerous."],a:0,at:"السلحفاة تتحرّك ببطء.",say:"The tortoise is moving slowly."},
 
  {section:"Grammar · Choose the correct answer"},
- {t:"mc",q:"Omar likes ......... in the hills.",ltr:1,o:["hiking","hike","hikes"],a:0},
- {t:"mc",q:"Could they ......... the mountain?",ltr:1,o:["climb","climbed","climbing"],a:0},
- {t:"mc",q:"There's ......... in my eye. I can't see at all!",ltr:1,o:["something","someone","no one"],a:0},
- {t:"mc",q:"He has a cold. He ......... play outside.",ltr:1,o:["shouldn't","have to","should"],a:0},
- {t:"mc",q:"Giraffes are the ......... animals on the planet.",ltr:1,o:["tall","tallest","taller"],a:1},
- {t:"mc",q:"The sun is ......... to shine tomorrow.",ltr:1,o:["go","going","goes"],a:1},
- {t:"mc",q:"The jungle is ......... tigers live.",ltr:1,o:["when","where","who"],a:1},
+ {t:"mc",q:"Omar likes ......... in the hills.",tr:"عمر يحبّ ......... في التلال.",ltr:1,o:["hiking","hike","hikes"],a:0,at:"hiking = المشي في الطبيعة (بعد like نضيف ing).",say:"Omar likes hiking in the hills."},
+ {t:"mc",q:"Could they ......... the mountain?",tr:"هل يستطيعون ......... الجبل؟",ltr:1,o:["climb","climbed","climbing"],a:0,at:"climb = يتسلّقون (بعد could نستخدم الفعل المجرّد).",say:"Could they climb the mountain?"},
+ {t:"mc",q:"There's ......... in my eye. I can't see at all!",tr:"هناك ......... في عيني. لا أرى إطلاقًا!",ltr:1,o:["something","someone","no one"],a:0,at:"something = شيءٌ ما.",say:"There's something in my eye."},
+ {t:"mc",q:"He has a cold. He ......... play outside.",tr:"هو مصابٌ بالبرد. ......... يلعب بالخارج.",ltr:1,o:["shouldn't","have to","should"],a:0,at:"shouldn't = لا ينبغي أن (لأنه مريض).",say:"He has a cold. He shouldn't play outside."},
+ {t:"mc",q:"Giraffes are the ......... animals on the planet.",tr:"الزرافات هي ......... الحيوانات على الكوكب.",ltr:1,o:["tall","tallest","taller"],a:1,at:"tallest = الأطول (صيغة التفضيل لأطول واحد).",say:"Giraffes are the tallest animals on the planet."},
+ {t:"mc",q:"The sun is ......... to shine tomorrow.",tr:"الشمس ......... تشرق غدًا.",ltr:1,o:["go","going","goes"],a:1,at:"going = سوف (is going to = سـ للمستقبل).",say:"The sun is going to shine tomorrow."},
+ {t:"mc",q:"The jungle is ......... tigers live.",tr:"الغابة هي المكان ......... تعيش النمور.",ltr:1,o:["when","where","who"],a:1,at:"where = حيث (للمكان).",say:"The jungle is where tigers live."},
 
  {section:"Controlled Writing · Rearrange"},
- {t:"mc",q:"رتّبي الكلمات: ( could / He / photos / take )",o:["He could take photos.","Photos could take he."],ltrOpt:1,a:0},
- {t:"mc",q:"رتّبي الكلمات: ( The / was / weather / snowy )",o:["Snowy weather is the.","The weather is snowy."],ltrOpt:1,a:1},
- {t:"mc",q:"رتّبي الكلمات: ( must / You / see / doctor / the )",o:["Must see the doctor you.","You must see the doctor."],ltrOpt:1,a:1},
- {t:"mc",q:"رتّبي الكلمات: ( are / Lions / dangerous )",o:["Lions are dangerous.","Dangerous lions are."],ltrOpt:1,a:0},
+ {t:"mc",q:"رتّبي الكلمات: ( could / He / photos / take )",o:["He could take photos.","Photos could take he."],ltrOpt:1,a:0,at:"كان يستطيع التقاط الصور.",say:"He could take photos."},
+ {t:"mc",q:"رتّبي الكلمات: ( The / was / weather / snowy )",o:["Snowy weather is the.","The weather is snowy."],ltrOpt:1,a:1,at:"الطقس مُثلج.",say:"The weather is snowy."},
+ {t:"mc",q:"رتّبي الكلمات: ( must / You / see / doctor / the )",o:["Must see the doctor you.","You must see the doctor."],ltrOpt:1,a:1,at:"يجب أن ترى الطبيب.",say:"You must see the doctor."},
+ {t:"mc",q:"رتّبي الكلمات: ( are / Lions / dangerous )",o:["Lions are dangerous.","Dangerous lions are."],ltrOpt:1,a:0,at:"الأسود خطيرة.",say:"Lions are dangerous."},
 
  {section:"Fill in the blanks ( sick · smart · wind )"},
- {t:"mc",q:"I like flying the kite in the ......... .",ltr:1,o:["wind","smart","sick"],a:0},
- {t:"mc",q:"My cat is ......... It can do tricks.",ltr:1,o:["wind","smart","sick"],a:1},
- {t:"mc",q:"Khalid is not very well. He feels ......... .",ltr:1,o:["wind","smart","sick"],a:2},
+ {t:"mc",q:"I like flying the kite in the ......... .",tr:"أحبّ تطيير الطائرة الورقية في ......... .",ltr:1,o:["wind","smart","sick"],a:0,at:"wind = الريح.",say:"I like flying the kite in the wind."},
+ {t:"mc",q:"My cat is ......... It can do tricks.",tr:"قطّتي ......... تستطيع أداء الحِيل.",ltr:1,o:["wind","smart","sick"],a:1,at:"smart = ذكية.",say:"My cat is smart. It can do tricks."},
+ {t:"mc",q:"Khalid is not very well. He feels ......... .",tr:"خالد ليس بخير. يشعر بـ ......... .",ltr:1,o:["wind","smart","sick"],a:2,at:"sick = مريض.",say:"Khalid is not very well. He feels sick."},
 
  {section:"Reading"},
- {t:"mc",q:"There are a lot of rocks that look ......... .",ltr:1,o:["hard","low","deep"],a:0},
- {t:"mc",q:"A place that has lots of trees and animals is a ......... .",ltr:1,o:["forest","lake","ocean"],a:0},
+ {t:"mc",q:"There are a lot of rocks that look ......... .",tr:"هناك صخورٌ كثيرة تبدو ......... .",ltr:1,o:["hard","low","deep"],a:0,at:"hard = صلبة/قاسية.",say:"There are a lot of rocks that look hard."},
+ {t:"mc",q:"A place that has lots of trees and animals is a ......... .",tr:"مكانٌ فيه أشجارٌ وحيواناتٌ كثيرة هو ......... .",ltr:1,o:["forest","lake","ocean"],a:0,at:"forest = غابة.",say:"A place that has lots of trees and animals is a forest."},
 
  {section:"Put ✓ or ✗"},
- {t:"mc",q:"She has a cut on her hand.",ltr:1,emoji:"🖐️🩹",o:["✓ صحيحة","✗ خاطئة"],a:0},
- {t:"mc",q:"Kangaroos have long tails.",ltr:1,emoji:"🐻‍❄️",o:["✓ صحيحة","✗ خاطئة"],a:1},
- {t:"mc",q:"Sami is in the wet climate.",ltr:1,emoji:"🧒🌧️",o:["✓ صحيحة","✗ خاطئة"],a:0},
+ {t:"mc",q:"She has a cut on her hand.",tr:"لديها جرحٌ في يدها.",ltr:1,emoji:"🖐️🩹",o:["✓ صحيحة","✗ خاطئة"],a:0,at:"الصورة تُظهر يدًا مجروحة، فالعبارة صحيحة.",say:"She has a cut on her hand."},
+ {t:"mc",q:"Kangaroos have long tails.",tr:"الكناغر لها ذيولٌ طويلة.",ltr:1,emoji:"🐻‍❄️",o:["✓ صحيحة","✗ خاطئة"],a:1,at:"الصورة لدبٍّ قطبي وليست كنغرًا، فالعبارة خاطئة.",say:"Kangaroos have long tails."},
+ {t:"mc",q:"Sami is in the wet climate.",tr:"سامي في المناخ الرطب.",ltr:1,emoji:"🧒🌧️",o:["✓ صحيحة","✗ خاطئة"],a:0,at:"الصورة تُظهر مطرًا، فالمناخ رطب والعبارة صحيحة.",say:"Sami is in the wet climate."},
 
  {section:"Choose the correct word for each picture"},
- {t:"mc",q:"اختاري الكلمة الصحيحة:",emoji:"🫄",lead:"the organ that digests food",ltrOpt:1,o:["stomach","ear"],a:0},
- {t:"mc",q:"اختاري الكلمة الصحيحة:",emoji:"🎢",ltrOpt:1,o:["sunglasses","roller coaster"],a:1},
- {t:"mc",q:"اختاري الكلمة الصحيحة:",emoji:"🔦",ltrOpt:1,o:["cap","flashlight"],a:1},
- {t:"mc",q:"اختاري الكلمة الصحيحة:",emoji:"🦌",ltrOpt:1,o:["cat","reindeer"],a:1},
+ {t:"mc",q:"اختاري الكلمة الصحيحة:",emoji:"🫄",lead:"the organ that digests food",ltrOpt:1,o:["stomach","ear"],a:0,at:"stomach = المعدة.",say:"stomach"},
+ {t:"mc",q:"اختاري الكلمة الصحيحة:",emoji:"🎢",ltrOpt:1,o:["sunglasses","roller coaster"],a:1,at:"roller coaster = الأفعوانية.",say:"roller coaster"},
+ {t:"mc",q:"اختاري الكلمة الصحيحة:",emoji:"🔦",ltrOpt:1,o:["cap","flashlight"],a:1,at:"flashlight = الكشّاف/المصباح اليدوي.",say:"flashlight"},
+ {t:"mc",q:"اختاري الكلمة الصحيحة:",emoji:"🦌",ltrOpt:1,o:["cat","reindeer"],a:1,at:"reindeer = الرنّة.",say:"reindeer"},
 
  {section:"Orthography · Choose the missing letter"},
- {t:"mc",q:"Pan ___ a",emoji:"🐼",ltrOpt:1,o:["d","k","f"],a:0},
- {t:"mc",q:"___ oys",emoji:"🧸",ltrOpt:1,o:["p","t","k"],a:1},
- {t:"mc",q:"fro ___",emoji:"🐸",ltrOpt:1,o:["g","i","w"],a:0},
- {t:"mc",q:"ca ___ e",emoji:"🕳️",lead:"a hole in a mountain (cave)",ltrOpt:1,o:["s","v","h"],a:1},
- {t:"mc",q:"u ___ brella",emoji:"☂️",ltrOpt:1,o:["s","m","o"],a:1},
+ {t:"mc",q:"Pan ___ a",emoji:"🐼",ltrOpt:1,o:["d","k","f"],a:0,at:"Panda = باندا (الحرف الناقص d).",say:"Panda"},
+ {t:"mc",q:"___ oys",emoji:"🧸",ltrOpt:1,o:["p","t","k"],a:1,at:"toys = ألعاب (الحرف الناقص t).",say:"toys"},
+ {t:"mc",q:"fro ___",emoji:"🐸",ltrOpt:1,o:["g","i","w"],a:0,at:"frog = ضفدع (الحرف الناقص g).",say:"frog"},
+ {t:"mc",q:"ca ___ e",emoji:"🕳️",lead:"a hole in a mountain (cave)",ltrOpt:1,o:["s","v","h"],a:1,at:"cave = كهف (الحرف الناقص v).",say:"cave"},
+ {t:"mc",q:"u ___ brella",emoji:"☂️",ltrOpt:1,o:["s","m","o"],a:1,at:"umbrella = مظلّة (الحرف الناقص m).",say:"umbrella"},
 
  {section:"Vocabulary · Write the correct word"},
- {t:"mc",q:"اختاري الكلمة الصحيحة للصورة:",emoji:"🌍",ltrOpt:1,o:["Earth","rabbit","rainy","toothache"],a:0},
- {t:"mc",q:"اختاري الكلمة الصحيحة للصورة:",emoji:"🐰",ltrOpt:1,o:["Earth","rabbit","rainy","toothache"],a:1},
- {t:"mc",q:"اختاري الكلمة الصحيحة للصورة:",emoji:"🌧️",ltrOpt:1,o:["Earth","rabbit","rainy","toothache"],a:2},
- {t:"mc",q:"اختاري الكلمة الصحيحة للصورة:",emoji:"🦷😣",ltrOpt:1,o:["Earth","rabbit","rainy","toothache"],a:3},
+ {t:"mc",q:"اختاري الكلمة الصحيحة للصورة:",emoji:"🌍",ltrOpt:1,o:["Earth","rabbit","rainy","toothache"],a:0,at:"Earth = الأرض.",say:"Earth"},
+ {t:"mc",q:"اختاري الكلمة الصحيحة للصورة:",emoji:"🐰",ltrOpt:1,o:["Earth","rabbit","rainy","toothache"],a:1,at:"rabbit = أرنب.",say:"rabbit"},
+ {t:"mc",q:"اختاري الكلمة الصحيحة للصورة:",emoji:"🌧️",ltrOpt:1,o:["Earth","rabbit","rainy","toothache"],a:2,at:"rainy = ممطر.",say:"rainy"},
+ {t:"mc",q:"اختاري الكلمة الصحيحة للصورة:",emoji:"🦷😣",ltrOpt:1,o:["Earth","rabbit","rainy","toothache"],a:3,at:"toothache = ألم الأسنان.",say:"toothache"},
 
  {section:"Match the dialogue"},
- {t:"mc",q:"How was your first vacation abroad?",ltr:1,o:["It was brilliant!","I think it's yours.","I am reading a comic book."],a:0},
- {t:"mc",q:"Where were the students on Sunday?",ltr:1,o:["They were at the school celebration.","I always walk in the morning.","It was brilliant!"],a:0},
- {t:"mc",q:"How often do you walk in the park?",ltr:1,o:["I always walk in the morning.","I sometimes sweep the floor.","I think it's yours."],a:0},
- {t:"mc",q:"Whose book is this?",ltr:1,o:["I think it's yours.","They were at the school celebration.","I am reading a comic book."],a:0},
- {t:"mc",q:"What are you doing?",ltr:1,o:["I am reading a comic book.","It was brilliant!","I always walk in the morning."],a:0},
- {t:"mc",q:"How often do you sweep the floor?",ltr:1,o:["I sometimes sweep the floor.","I think it's yours.","They were at the school celebration."],a:0},
+ {t:"mc",q:"How was your first vacation abroad?",tr:"كيف كانت أوّل إجازةٍ لك في الخارج؟",ltr:1,o:["It was brilliant!","I think it's yours.","I am reading a comic book."],a:0,at:"كانت رائعة!",say:"It was brilliant!"},
+ {t:"mc",q:"Where were the students on Sunday?",tr:"أين كان الطلاب يوم الأحد؟",ltr:1,o:["They were at the school celebration.","I always walk in the morning.","It was brilliant!"],a:0,at:"كانوا في احتفال المدرسة.",say:"They were at the school celebration."},
+ {t:"mc",q:"How often do you walk in the park?",tr:"كم مرّة تمشي في الحديقة؟",ltr:1,o:["I always walk in the morning.","I sometimes sweep the floor.","I think it's yours."],a:0,at:"أمشي دائمًا في الصباح.",say:"I always walk in the morning."},
+ {t:"mc",q:"Whose book is this?",tr:"لمن هذا الكتاب؟",ltr:1,o:["I think it's yours.","They were at the school celebration.","I am reading a comic book."],a:0,at:"أظنّه كتابك.",say:"I think it's yours."},
+ {t:"mc",q:"What are you doing?",tr:"ماذا تفعل؟",ltr:1,o:["I am reading a comic book.","It was brilliant!","I always walk in the morning."],a:0,at:"أقرأ قصةً مصوّرة.",say:"I am reading a comic book."},
+ {t:"mc",q:"How often do you sweep the floor?",tr:"كم مرّة تكنس الأرضية؟",ltr:1,o:["I sometimes sweep the floor.","I think it's yours.","They were at the school celebration."],a:0,at:"أكنس الأرضية أحيانًا.",say:"I sometimes sweep the floor."},
 ];
 
 /* ---------- ميار · رياضيات (رابع ابتدائي) ---------- */
@@ -698,6 +839,7 @@ const GIRLS = {
    subjects:[
      {key:"english", title:"مراجعة الإنجليزي", short:"English · Grammar & Vocabulary", emoji:"🔤", cls:"s-en",
       c:"#e11d48", c2:"#f97316", data:MAYAR_EN,
+      learn:true,
       intro:"حلّي أسئلة الإنجليزي: القواعد، المفردات، والحوار. اقرئي كل سؤال واختاري الإجابة الصحيحة."},
      {key:"math", title:"مراجعة الرياضيات", short:"كسور · قياس · هندسة", emoji:"🔢", cls:"s-m4",
       c:"#0d9488", c2:"#16a34a", data:MAYAR_MATH,
@@ -725,7 +867,7 @@ let curGirl=null, curSubject=null, QS=[], answers=[], locked=false;
 const $ = (id)=>document.getElementById(id);
 
 function showScreen(id){
-  ['pickGirl','pickSubject','quizScreen'].forEach(s=>{
+  ['pickGirl','pickSubject','modePick','learnScreen','playScreen','quizScreen'].forEach(s=>{
     const el=$(s);
     if(s===id){ el.style.display='block'; el.classList.add('active'); }
     else { el.style.display='none'; el.classList.remove('active'); }
@@ -762,6 +904,7 @@ function startSubject(i){
   $('hBadge').textContent=s.emoji;
   $('hTitle').textContent=GIRLS[curGirl].name+' · '+s.title;
   $('introText').textContent=s.intro;
+  if(s.learn){ showModePick(s); return; }
   buildQuiz(s.data);
   showScreen('quizScreen');
 }
@@ -908,6 +1051,162 @@ $('retryBtn').addEventListener('click',()=>{
   $('quiz').style.display='block';
 });
 function backToSubjects(){ pickGirl(curGirl); }
+
+/* ============ النُّطق الصوتي (Web Speech API) ============ */
+function speak(text){
+  try{
+    if(!('speechSynthesis' in window) || !text) return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.8; u.pitch=1.05;
+    const vs=speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.toLowerCase().startsWith('en'));
+    if(vs.length){ u.voice = vs.find(v=>/female|samantha|karen|zira|aria|jenny|google us/i.test(v.name))||vs[0]; }
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+if('speechSynthesis' in window){ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=function(){ speechSynthesis.getVoices(); }; }
+
+/* ============ اختيار طريقة المذاكرة ============ */
+function showModePick(s){
+  document.getElementById('mpTitle').textContent = GIRLS[curGirl].name+' · '+s.title;
+  showScreen('modePick');
+}
+
+/* ============ بطاقات التعلّم ============ */
+let learnList=[], learnIdx=0;
+function startLearn(){
+  learnList = curSubject.data.filter(x=>!x.section);
+  learnIdx=0;
+  showScreen('learnScreen');
+  renderCard();
+}
+function speakLearn(){ const it=learnList[learnIdx]; if(it) speak(it.say||it.o[it.a]); }
+function renderCard(){
+  const it=learnList[learnIdx]; if(!it) return;
+  const card=$('flashcard');
+  const qCls = it.ltr ? ' en' : '';
+  const emoji = it.emoji ? '<div class="fc-emoji">'+it.emoji+'</div>' : '';
+  const tr = it.tr ? '<div class="fc-tr">'+it.tr+'</div>' : '';
+  const ans = it.o[it.a];
+  const at = it.at ? '<div class="fc-at">'+it.at+'</div>' : '';
+  card.innerHTML = emoji
+    + '<div class="fc-q'+qCls+'">'+it.q+'</div>'+tr
+    + '<div class="fc-divider">⬇️</div>'
+    + '<div class="fc-label">الإجابة الصحيحة</div>'
+    + '<div class="fc-ans">'+ans+'</div>'+at
+    + '<div><button class="speak-btn" onclick="speakLearn()">🔊 اسمعي النُّطق</button></div>';
+  card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
+  $('lnPos').textContent = (learnIdx+1)+' / '+learnList.length;
+  $('lnPrev').disabled = learnIdx===0;
+  $('lnNext').textContent = (learnIdx===learnList.length-1) ? 'تمّت ✓' : 'التالي ➡️';
+  $('lnDone').style.display = (learnIdx===learnList.length-1) ? 'block' : 'none';
+  setTimeout(speakLearn, 380);
+}
+function learnNext(){ if(learnIdx<learnList.length-1){ learnIdx++; renderCard(); } }
+function learnPrev(){ if(learnIdx>0){ learnIdx--; renderCard(); } }
+
+/* ============ وضع الاختبار التفاعلي ============ */
+let playList=[], playIdx=0, playWrong=[], playRight=0, playTotal=0, playAnswered=false, playRound=1;
+function startPlay(){
+  const all = curSubject.data.filter(x=>!x.section);
+  playList = shuffle(all.slice());
+  playIdx=0; playWrong=[]; playRight=0; playTotal=all.length; playRound=1;
+  showScreen('playScreen');
+  renderPlayQ();
+}
+function speakPlay(){ const it=playList[playIdx]; if(it) speak(it.say||it.o[it.a]); }
+function renderPlayQ(){
+  playAnswered=false;
+  const it=playList[playIdx]; if(!it) return;
+  const qCls = it.ltr ? ' en' : '';
+  const optCls = (it.ltr||it.ltrOpt) ? ' en' : '';
+  const emoji = it.emoji ? '<div class="pemoji">'+it.emoji+'</div>' : '';
+  const tr = it.tr ? '<div class="ptr">'+it.tr+'</div>' : '';
+  const correct = it.o[it.a];
+  const opts = shuffle(it.o.slice());
+  it._opts = opts; it._a = opts.indexOf(correct);
+  let oh='';
+  opts.forEach(function(t,j){ oh += '<div class="popt'+optCls+'" onclick="pickPlay('+j+')"><span class="pdot"></span><span>'+t+'</span></div>'; });
+  $('playArea').innerHTML = '<div class="pcard" id="pcard">'+emoji
+    + '<div class="pq'+qCls+'">'+it.q+'</div>'+tr
+    + '<div class="popts">'+oh+'</div>'
+    + '<div class="feedback" id="feedback"></div>'
+    + '<button class="pnext" id="pnext" onclick="playNext()">التالي ➡️</button></div>';
+  $('plBar').style.width = (playIdx/playList.length*100)+'%';
+  $('plPos').textContent = (playIdx+1)+' / '+playList.length;
+  $('plScore').textContent = (playRound>1) ? '🔁 جولة التصحيح — راجعي اللي غلطتِ فيه' : '';
+}
+function pickPlay(j){
+  if(playAnswered) return;
+  playAnswered=true;
+  const it=playList[playIdx];
+  const card=$('pcard');
+  const opts=card.querySelectorAll('.popt');
+  card.querySelector('.popts').classList.add('plocked');
+  opts.forEach(function(o,k){ o.onclick=null; if(k===it._a) o.classList.add('right'); });
+  const fb=$('feedback');
+  const sayBtn='<button class="fb-speak" onclick="speakPlay()">🔊 اسمعي الجملة</button>';
+  if(j===it._a){
+    playRight++;
+    fb.className='feedback ok show';
+    fb.innerHTML='<div class="fb-head">🎉 أحسنتِ! إجابة صحيحة</div>'
+      + (it.at?'<div class="fb-at">'+it.at+'</div>':'') + sayBtn;
+    celebrate();
+  } else {
+    playWrong.push(it);
+    opts[j].classList.add('wrongpick');
+    card.classList.add('shake'); setTimeout(function(){card.classList.remove('shake');},500);
+    fb.className='feedback no show';
+    fb.innerHTML='<div class="fb-head">💡 الإجابة الصحيحة:</div>'
+      + '<div class="fb-ans">'+it.o[it.a]+'</div>'
+      + (it.at?'<div class="fb-at">'+it.at+'</div>':'') + sayBtn;
+  }
+  speak(it.say||it.o[it.a]);
+  const nx=$('pnext'); nx.classList.add('show');
+  nx.textContent = (playIdx===playList.length-1) ? (playWrong.length>0?'جولة التصحيح 🔁':'النتيجة ✓') : 'التالي ➡️';
+}
+function playNext(){
+  if(playIdx < playList.length-1){ playIdx++; renderPlayQ(); window.scrollTo({top:0,behavior:'smooth'}); }
+  else if(playWrong.length>0){
+    playList = shuffle(playWrong.slice()); playWrong=[]; playIdx=0; playRound++;
+    renderPlayQ(); window.scrollTo({top:0,behavior:'smooth'});
+  } else { showPlayResult(); }
+}
+function showPlayResult(){
+  $('playArea').innerHTML = '<div class="pcard" style="text-align:center">'
+    + '<div style="font-size:66px">🏆</div>'
+    + '<h2 style="font-size:23px;font-weight:900;margin:6px 0;color:#15803d">ما شاء الله، أتقنتِ كل الأسئلة!</h2>'
+    + '<p style="color:var(--muted);font-weight:600;font-size:15px;line-height:1.8">جاوبتِ على جميع أسئلة الإنجليزي صح. كرّري الاختبار كل يوم وبتحفظينها كلها 💪</p>'
+    + '<div style="display:flex;flex-direction:column;gap:9px;margin-top:18px">'
+    + '<button class="btn btn-primary" onclick="startPlay()">العبي مرة ثانية 🔄</button>'
+    + '<button class="btn btn-ghost" onclick="startLearn()">راجعي البطاقات 🎴</button>'
+    + '<button class="btn btn-ghost" onclick="showScreen(\'pickSubject\')">رجوع للمواد</button></div></div>';
+  $('plBar').style.width='100%'; $('plPos').textContent='تمّ ✓'; $('plScore').textContent='';
+  celebrate(); setTimeout(celebrate,450);
+}
+function confirmLeavePlay(){ if(confirm('تبين تطلعين من الاختبار؟')) showScreen('modePick'); }
+
+/* ============ الاحتفال (كونفيتي + إيموجي) ============ */
+function celebrate(){
+  const c=$('confetti'); if(!c) return;
+  c.classList.add('go');
+  const colors=['#f43f5e','#f97316','#facc15','#22c55e','#3b82f6','#a855f7','#ec4899'];
+  for(let i=0;i<70;i++){
+    const d=document.createElement('div'); d.className='cft';
+    d.style.left=Math.random()*100+'vw';
+    d.style.background=colors[i%colors.length];
+    d.style.animationDuration=(1.4+Math.random()*1.3)+'s';
+    d.style.animationDelay=(Math.random()*0.25)+'s';
+    if(Math.random()>0.5) d.style.borderRadius='50%';
+    c.appendChild(d);
+  }
+  const ch=document.createElement('div'); ch.className='cheer';
+  ch.textContent=['🎉','⭐','🌟','👏','🥳'][Math.floor(Math.random()*5)];
+  document.body.appendChild(ch);
+  setTimeout(function(){ c.classList.remove('go'); c.innerHTML=''; ch.remove(); },1750);
+}
+
 </script>
+<div id="confetti"></div>
 </body>
 </html>
